@@ -12,12 +12,18 @@ from pandas import DataFrame
 from matplotlib import pyplot as plt
 import shap
 from sklearn.base import BaseEstimator
-from premier_league import inference_pipeline
-from premier_league import constants
 import joblib
 import io
 import base64
 from PIL import Image
+try:
+    from premier_league import (
+        inference_pipeline,
+        constants
+    )
+except:
+    import inference_pipeline
+    import constants
 
 def get_shap_values(data, classifier):
     explainer = shap.Explainer(classifier)

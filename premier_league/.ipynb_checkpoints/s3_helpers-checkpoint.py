@@ -10,7 +10,10 @@ import pickle
 from datetime import datetime
 
 # import constants
-from premier_league import constants as constants
+try:
+    from premier_league import constants as constants
+except ImportError:
+    import constants
 
 
 def get_current_date_time() -> str:
@@ -140,7 +143,8 @@ def save_data_s3(
 def load_transformer_s3_pickle(
     file_path: str,
     bucket: str = constants.S3_BUCKET,
-    profile_name: Optional[str] = "premier-league-app"
+    profile_name: Optional[str] = "premier-league-app",
+    is_transformer: Optional[bool] = True
 ):
     """
     Load a scikit-learn transformer object from a pickle file on an S3 bucket.
@@ -165,11 +169,17 @@ def load_transformer_s3_pickle(
         s3 = session.client("s3")
         response = s3.get_object(Bucket=bucket, Key=file_path)
         
-        # Read the object (which is file-like) using BytesIO
-        with BytesIO(response['Body'].read()) as f:
-            # Load the transformer object from the BytesIO object using pickle
-            transformer = pickle.load(f)
-        
+        if is_transformer:
+            # Read the content as a byte string
+            serialised_transformer = response['Body'].read()
+
+            # Deserialise the byte string back into a Python object
+            transformer = pickle.loads(serialised_transformer)
+        else:
+            # Read the object (which is file-like) using BytesIO
+            with BytesIO(response['Body'].read()) as f:
+                # Load the transformer object from the BytesIO 
+                transformer = pickle.load(f)
         return transformer
 
     except NoCredentialsError:
@@ -189,7 +199,8 @@ def save_transformer_s3_pickle(
     transformer,
     file_path: str,
     bucket: str = constants.S3_BUCKET,
-    profile_name: Optional[str] = "premier-league-app"
+    profile_name: Optional[str] = "premier-league-app",
+    is_transformer: Optional[bool] = True
 ) -> None:
     """
     Save a scikit-learn transformer object to a pickle file on an S3 bucket.
@@ -212,13 +223,25 @@ def save_transformer_s3_pickle(
             )
         
         s3_client = session.client("s3")
-        with BytesIO() as f:
-            # Save transformer object to a BytesIO object using pickle
-            pickle.dump(transformer, f)
-            f.seek(0)  # Move pointer to the start of the file
+        if is_transformer:
+            # Serialise the transformer object to a byte string
+            serialised_transformer = pickle.dumps(transformer)
+
+            # Upload the byte string contents to S3
             s3_client.put_object(
-                Bucket=bucket, Key=file_path, Body=f.getvalue())
+                Bucket=bucket, 
+                Key=file_path, 
+                Body=serialised_transformer)
             print(f"Transformer object is saved to S3 bucket {bucket} at {file_path}")
+        
+        else:
+            with BytesIO() as f:
+                # Save transformer object to a BytesIO object using pickle
+                pickle.dump(transformer, f)
+                f.seek(0)  # Move pointer to the start of the file
+                s3_client.put_object(
+                    Bucket=bucket, Key=file_path, Body=f.getvalue())
+                print(f"Transformer object is saved to S3 bucket {bucket} at {file_path}")
 
     except NoCredentialsError:
         raise NoCredentialsError(

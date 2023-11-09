@@ -2,14 +2,16 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import shap
+import joblib
+import pydeck as pdk
+import numpy as np
+import sys
+
 import inference_pipeline
 import data_extraction
 import visualisations
 import constants
 import s3_helpers
-import joblib
-import pydeck as pdk
-import numpy as np
 
 # source env_premier_league/bin/activate
 # streamlit run premier_league/streamlit_app.py
@@ -25,7 +27,10 @@ stadium_data = s3_helpers.grab_data_s3(
 )
 
 # Classifier
-classifier = joblib.load(constants.class_model_name)
+regressor1 = s3_helpers.load_transformer_s3_pickle(
+    constants.HOME_MODEL_NAME,
+    is_transformer = False
+)
 
 # Extract current fixtures
 current_fixtures = data_extraction.extract_current_fixtures(
@@ -50,7 +55,7 @@ pred_df = current_fixtures[[
     'Fixture Time',
     'Location'
 ]].reset_index(drop=True).head(10)
-pred_df.columns = constants.pred_df_col_names
+pred_df.columns = constants.PRED_DF_COL_NAMES
 pred_df.index = pred_df.index + 1
 
 
@@ -110,16 +115,17 @@ with col1:
     
     # Shap summary
     shap_values, features = visualisations.get_shap_values(
-    transformed_data, classifier)
+        transformed_data, regressor1
+    )
     st.write("SHAP Summary:")
     shap.initjs()
     plt.figure(figsize=(10, 6))
     shap.summary_plot(
-        shap_values[0], 
-        transformed_data[classifier.feature_names_],
+        shap_values, 
+        transformed_data[regressor1.feature_names_],
         show=True
     )
-    plt.title('Prediction for Home Team Result')
+    plt.title('Prediction for Home Team Goals')
     plt.xlabel('Shap Impact')
     st.pyplot(plt)
 
@@ -152,7 +158,7 @@ with col2:
     # Plot
     fig, ax = visualisations.create_waterfall(
             transformed_data, 
-            classifier,
+            regressor1,
             selected_fixture
     )
     st.pyplot(fig)

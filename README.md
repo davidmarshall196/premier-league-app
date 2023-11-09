@@ -20,15 +20,22 @@ pip install -r requirements.txt
 ## Usage
 The app is running on Streamlit Community Cloud at https://premier-league-predictor.streamlit.app/
 
-Data Sources
+## Data Sources
 - Historical results from https://www.football-data.co.uk
 - Upcoming fixtures from https://fixturedownload.com
 - League table from https://www.footballwebpages.co.uk
 
-Models
+## Models
 The app uses [Catboost](https://catboost.ai/) for the underlying predictions. There are models for:
 - Full time result
 - Home Team Score
 - Away Team Score
 
-
+## To Do
+- Logging
+- MLFLow integration
+- Scheduling
+- Flake8 + Black
+- More unit tests
+- Fix Shap plots
+- Fix last 5 fixtures

@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 import numpy as np
 from datetime import datetime as dt
@@ -34,9 +32,7 @@ def get_goals_scored(
     """
 
     # Create a dictionary with team names as keys
-    teams = {}
-    for i in playing_stat.groupby([ 'HomeTeam']).mean().T.columns:
-        teams[i] = []
+    teams = {team: [] for team in playing_stat['HomeTeam'].unique()}
     
     # the value corresponding to keys is a list containing the match location.
     for i in range(len(playing_stat)):
@@ -73,9 +69,7 @@ def get_goals_conceded(
     as the number of goals conceded by the team
     """
 
-    teams = {}
-    for i in playing_stat.groupby('HomeTeam').mean().T.columns:
-        teams[i] = []
+    teams = {team: [] for team in playing_stat['HomeTeam'].unique()}
     
     for i in range(len(playing_stat)):
         ATGC = playing_stat.iloc[i]['FTHG']
@@ -208,9 +202,7 @@ def get_matchres(
     big_df (DataFrame): Pandas dataframe with team names as rows and columns
     as the match results ('W', 'D' or 'L') for each match.
     """
-    teams = {}
-    for i in playing_stat.groupby('HomeTeam').mean().T.columns:
-        teams[i] = []
+    teams = {team: [] for team in playing_stat['HomeTeam'].unique()}
 
     # the value corresponding to keys is a list containing the match result
     for i in range(total_games):

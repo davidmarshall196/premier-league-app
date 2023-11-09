@@ -2,10 +2,14 @@
 import pandas as pd
 import os
 import logging
-from premier_league import (
-    constants,
-    s3_helpers
-)
+try:
+    from premier_league import (
+        constants,
+        s3_helpers
+    )
+except ImportError:
+    import constants
+    import s3_helpers
 import importlib
 import datetime
 from datetime import datetime as dt

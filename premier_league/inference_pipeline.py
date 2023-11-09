@@ -1,22 +1,40 @@
 import pandas as pd
 import numpy as np
-from premier_league import constants
-from premier_league import data_extraction
-if constants.RUN_DATA_EXPECTATIONS:
-    from expectations_helpers import (
-        AutoGreatExpectations,
-        view_full_suite,
-        view_suite_summary,
-        save_expectations,
-        load_expectations,
-        validate_data
+try:
+    from premier_league import (
+        constants,
+        data_extraction,
+        preprocessing,
+        prediction,
+        visualisations
     )
-from premier_league import preprocessing
+    if constants.RUN_DATA_EXPECTATIONS:
+        from premier_league.expectations_helpers import (
+            AutoGreatExpectations,
+            view_full_suite,
+            view_suite_summary,
+            save_expectations,
+            load_expectations,
+            validate_data
+        )
+except ImportError:
+    import constants
+    import data_extraction
+    import preprocessing
+    import prediction
+    import visualisations
+    if constants.RUN_DATA_EXPECTATIONS:
+        from expectations_helpers import (
+            AutoGreatExpectations,
+            view_full_suite,
+            view_suite_summary,
+            save_expectations,
+            load_expectations,
+            validate_data
+        )
 import joblib
-from premier_league import prediction
 from tabulate import tabulate
 import runpy
-from premier_league import visualisations
 import shap
 
 def run_inference_pipeline():

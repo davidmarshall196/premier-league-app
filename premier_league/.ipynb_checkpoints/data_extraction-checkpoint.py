@@ -2,10 +2,14 @@
 import pandas as pd
 import os
 import logging
-from premier_league import (
-    constants,
-    s3_helpers
-)
+try:
+    from premier_league import (
+        constants,
+        s3_helpers
+    )
+except ImportError:
+    import constants
+    import s3_helpers
 import importlib
 import datetime
 from datetime import datetime as dt
@@ -116,7 +120,11 @@ def add_new_data(full_data, cols_req, save_loc,
                 new_data = new_data.head(new_data.shape[0] - rm) 
         full_data_remove = pd.concat([full_data_remove, new_data])
         full_data_remove = full_data_remove.drop_duplicates()
-        full_data_remove.dropna().to_csv(save_loc, index=False)
+        full_data_remove = full_data_remove.dropna()
+        s3_helpers.save_data_s3(
+            full_data_remove,
+            save_loc
+        )
         print(f'Data saved at {save_loc}')
         return full_data_remove
     except HTTPError as e:

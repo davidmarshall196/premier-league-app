@@ -2,8 +2,11 @@
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
-from premier_league import preprocessing_helpers
 from typing import Tuple
+try:
+    from premier_league import preprocessing_helpers
+except ImportError:
+    import preprocessing_helpers
 
 #columns_req = ['season', 'Date','HomeTeam','AwayTeam','FTHG','FTAG','FTR']
 #
