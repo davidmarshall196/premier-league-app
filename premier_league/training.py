@@ -126,9 +126,9 @@ def optimise_hyperparameters(
     X = training_data.drop(target_column, axis=1)
     y = training_data[target_column]
     learning_rate = np.linspace(0.01, 0.1, 10)
-    max_depth = np.arange(2, 18, 2)
+    max_depth = np.arange(2, 12, 2)
     colsample_bylevel = np.arange(0.3, 0.8, 0.1)
-    iterations = np.arange(50, 1000, 50)
+    iterations = np.arange(100, 501, 100)
     l2_leaf_reg = np.arange(0, 10)
     bagging_temperature = np.arange(0, 100, 10)
 

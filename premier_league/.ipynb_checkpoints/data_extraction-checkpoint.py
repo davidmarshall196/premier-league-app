@@ -209,6 +209,10 @@ def get_fixtures(full_data):
     full_data['FTHG'] = full_data['FTHG'].fillna(0)
     full_data['FTHG'] = full_data['FTHG'].fillna(0)
     full_data['FTHG'] = full_data['FTHG'].fillna('D')
+    full_data = full_data.drop_duplicates(
+        subset=['season', 'Date', 'HomeTeam', 'AwayTeam'],
+        keep='first'
+    )
     return full_data
     
 

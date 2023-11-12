@@ -66,7 +66,7 @@ def predict(data: pd.DataFrame, model) -> list:
     data = data[model.feature_names_]
     if 'Regress' in str(type(model)):
         predictions = model.predict(data)
-        predictions = predictions.astype(int)
+        predictions = predictions.round().astype(int)
     else:
         predictions = model.predict(data)
         predictions = [item for sublist in predictions for item in sublist]
@@ -107,8 +107,11 @@ def add_match_result(transformed_data, classifier, new_df):
         Exception: If the length of transformed_data is not equal to the length of new_df.
     """
     if len(transformed_data) == len(new_df):
-        transformed_data['match_prediction'] = predict(transformed_data, classifier)
-        transformed_data['match_prediction'] = transformed_data['match_prediction'].astype('category')
+        transformed_data[
+            'match_prediction'] = predict(transformed_data, classifier)
+        transformed_data[
+            'match_prediction'] = transformed_data[
+            'match_prediction'].astype('category')
         transformed_data['FTHG'] = new_df['FTHG']
         transformed_data['FTAG'] = new_df['FTAG']
         return transformed_data

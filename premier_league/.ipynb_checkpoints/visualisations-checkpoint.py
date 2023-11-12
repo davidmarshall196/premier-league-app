@@ -207,34 +207,43 @@ def extract_last_results(
     return results
 
 def format_results(matches, home_team, away_team):
-    
     matches_df = matches.copy()
+
     # Define a function to convert the result code to a string
-    def result_string(row):
-        if row['FTR'] == 0:
-            return "Win"
-        elif row['FTR'] == 1:
-            return "Draw"
-        elif row['FTR'] == 2:
-            return "Loss"
+    def result_string(row, team):
+        if row['HomeTeam'] == team:
+            if row['FTR'] == 0:
+                return "Win"
+            elif row['FTR'] == 1:
+                return "Draw"
+            elif row['FTR'] == 2:
+                return "Loss"
         else:
-            return 'NA'
+            if row['FTR'] == 0:
+                return "Loss"
+            elif row['FTR'] == 1:
+                return "Draw"
+            elif row['FTR'] == 2:
+                return "Win"
+        return 'NA'
     
     # Process results for home team
     home_results = []
-    for index, row in matches_df.head(5).iterrows():
-        opponent = row['AwayTeam'] if row['HomeTeam'] == home_team else row['HomeTeam']
-        venue = "H" if row['HomeTeam'] == home_team else "A"
-        result = f"{result_string(row)} v {opponent} ({venue})"
-        home_results.append(result)
+    for index, row in matches_df.iterrows():
+        if row['HomeTeam'] == home_team or row['AwayTeam'] == home_team:
+            opponent = row['AwayTeam'] if row['HomeTeam'] == home_team else row['HomeTeam']
+            venue = "H" if row['HomeTeam'] == home_team else "A"
+            result = f"{result_string(row, home_team)} v {opponent} ({venue})"
+            home_results.append(result)
     
     # Process results for away team
     away_results = []
-    for index, row in matches_df.tail(5).iterrows():
-        opponent = row['AwayTeam'] if row['HomeTeam'] == away_team else row['HomeTeam']
-        venue = "H" if row['HomeTeam'] == away_team else "A"
-        result = f"{result_string(row)} v {opponent} ({venue})"
-        away_results.append(result)
+    for index, row in matches_df.iterrows():
+        if row['HomeTeam'] == away_team or row['AwayTeam'] == away_team:
+            opponent = row['AwayTeam'] if row['HomeTeam'] == away_team else row['HomeTeam']
+            venue = "H" if row['HomeTeam'] == away_team else "A"
+            result = f"{result_string(row, away_team)} v {opponent} ({venue})"
+            away_results.append(result)
     
     # Create final DataFrame
     final_df = pd.DataFrame({
@@ -243,7 +252,6 @@ def format_results(matches, home_team, away_team):
     })
 
     return final_df
-
 
 
 def extract_last_fixtures(
@@ -462,28 +470,25 @@ def plot_last_5(df, fixture):
 
     return fig, ax
 
-def create_waterfall(
-    transformed_data, 
-    classifier,
-    fixture
-): 
+def create_waterfall(transformed_data, regression_model, fixture):
     transformed_data['fixture'] = transformed_data[
-        'HomeTeam'] + ' v ' + transformed_data['AwayTeam']
+        'HomeTeam'].astype(str) + ' v ' + transformed_data['AwayTeam'].astype(str) 
 
     season = transformed_data['season'].unique()[-1]
     row = transformed_data[(transformed_data['season'] == season) & 
                 (transformed_data['fixture'] == fixture)].index[0]
 
     # compute SHAP values
-    explainer = shap.TreeExplainer(classifier)
-    shap_values = explainer.shap_values(transformed_data[classifier.feature_names_])
-    
+    explainer = shap.Explainer(regression_model)
+    shap_values = explainer(transformed_data[regression_model.feature_names_])
+
     fig, ax = plt.subplots()
     shap.waterfall_plot(shap.Explanation(
-        values=shap_values[0][row], 
-        base_values=explainer.expected_value[0], data=transformed_data[
-            classifier.feature_names_].iloc[row], 
-        feature_names=transformed_data[classifier.feature_names_].columns.tolist()))   
+        values=shap_values.values[row], 
+        base_values=explainer.expected_value, 
+        data=transformed_data[regression_model.feature_names_].iloc[row], 
+        feature_names=transformed_data[regression_model.feature_names_].columns.tolist()))
+    
     return fig, ax
         
     

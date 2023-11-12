@@ -37,5 +37,4 @@ The app uses [Catboost](https://catboost.ai/) for the underlying predictions. Th
 - Scheduling
 - Flake8 + Black
 - More unit tests
-- Fix Shap plots
-- Fix last 5 fixtures
+- Fix Functions (docs, types)

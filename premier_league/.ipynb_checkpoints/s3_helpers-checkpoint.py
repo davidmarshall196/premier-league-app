@@ -8,6 +8,7 @@ import os
 from io import (BytesIO, StringIO)
 import pickle
 from datetime import datetime
+import streamlit as st
 
 # import constants
 try:
@@ -252,3 +253,85 @@ def save_transformer_s3_pickle(
         raise PartialCredentialsError(
             "Incomplete credentials. Please check your AWS configuration."
         )
+        
+def load_and_display_image_from_s3(
+    team_name,
+    bucket_name: str = constants.S3_BUCKET,
+    profile_name: Optional[str] = "premier-league-app",
+):
+    """
+    Load an image from S3 and display it in Streamlit.
+
+    :param bucket_name: Name of the S3 bucket
+    :param object_name: Name of the object (file) in S3
+    :param aws_access_key_id: AWS Access Key ID
+    :param aws_secret_access_key: AWS Secret Access Key
+    :param target_size: Desired size of the image as a tuple (width, height)
+    """
+    try:
+        # The profile name is optional and used for local development
+        if profile_name:
+            session = boto3.Session(profile_name=profile_name)
+        else:
+            # Use environment variables for AWS credentials
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name="eu-west-2"  # or your AWS region
+            )
+        
+        s3_client = session.client("s3")
+        # Get the image object from S3
+        object_name = team_name.replace("'","").replace(' ','_')
+        response = s3_client.get_object(Bucket=bucket_name, 
+                                        Key=object_name)
+        image_content = response['Body'].read()
+
+        # Open the image and resize it
+        image = Image.open(io.BytesIO(image_content))
+
+        return image
+
+
+    except NoCredentialsError:
+        raise NoCredentialsError(
+            "Credentials not available. Make sure the profile "
+            "name is correct and the credentials are set up properly."
+        )
+    except PartialCredentialsError:
+        raise PartialCredentialsError(
+            "Incomplete credentials. Please check your AWS configuration."
+        )
+    
+def display_side_by_side_images(
+    bucket_name, 
+    image_names, 
+    aws_access_key_id, 
+    aws_secret_access_key):
+    """
+    Display two images side by side in Streamlit.
+
+    :param bucket_name: Name of the S3 bucket
+    :param image_names: List of two image names in S3
+    :param aws_access_key_id: AWS Access Key ID
+    :param aws_secret_access_key: AWS Secret Access Key
+    """
+    images = [load_image_from_s3(name, bucket_name
+                                ) for name in image_names]
+    
+    # Find the max height of the two images
+    max_height = max(image.size[1] for image in images)
+
+    # Resize images to have the same height
+    resized_images = [image.resize((int(image.width * max_height / image.height), max_height)) for image in images]
+
+    # Combine images side by side
+    total_width = sum(image.size[0] for image in resized_images)
+    combined_image = Image.new('RGB', (total_width, max_height))
+    x_offset = 0
+    for image in resized_images:
+        combined_image.paste(image, (x_offset, 0))
+        x_offset += image.size[0]
+
+    # Display the combined image in Streamlit
+    st.image(combined_image)

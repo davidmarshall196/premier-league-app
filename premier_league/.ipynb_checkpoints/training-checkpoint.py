@@ -106,7 +106,8 @@ def optimise_hyperparameters_xgboost(
 def optimise_hyperparameters(
     training_data: pd.DataFrame, 
     target_column: str, 
-    classification: bool = True
+    classification: bool = True,
+    max_evals: int = 5
 ) -> Dict[str, Any]:
     """
     Optimize CatBoost hyperparameters using Hyperopt.
@@ -115,6 +116,7 @@ def optimise_hyperparameters(
         training_data (pd.DataFrame): The training dataset.
         target_column (str): The name of the target column.
         classification (bool): Whether it is a classification task (True) or regression task (False).
+        max_evals (int): The number of iterations in the optimisation.
 
     Returns:
         Dict[str, Any]: Dictionary containing the best hyperparameters.
@@ -124,9 +126,9 @@ def optimise_hyperparameters(
     X = training_data.drop(target_column, axis=1)
     y = training_data[target_column]
     learning_rate = np.linspace(0.01, 0.1, 10)
-    max_depth = np.arange(2, 18, 2)
+    max_depth = np.arange(2, 12, 2)
     colsample_bylevel = np.arange(0.3, 0.8, 0.1)
-    iterations = np.arange(50, 1000, 50)
+    iterations = np.arange(100, 501, 100)
     l2_leaf_reg = np.arange(0, 10)
     bagging_temperature = np.arange(0, 100, 10)
 
@@ -195,7 +197,7 @@ def optimise_hyperparameters(
     obj = HYPOpt(X_train, X_test, y_train, y_test)
     ctb_opt = obj.process(
         fn_name='ctb_clf', space=ctb_para, trials=Trials(), 
-        algo=tpe.suggest, max_evals=5)
+        algo=tpe.suggest, max_evals=max_evals)
     best_param={}
     best_param['learning_rate']=learning_rate[ctb_opt['learning_rate']]
     best_param['iterations']=iterations[ctb_opt['iterations']]

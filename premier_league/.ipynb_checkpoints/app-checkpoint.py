@@ -26,9 +26,15 @@ stadium_data = s3_helpers.grab_data_s3(
     constants.STADIUM_DATA_LOCATION
 )
 
-# Classifier
+# Home Team
 regressor1 = s3_helpers.load_transformer_s3_pickle(
     constants.HOME_MODEL_NAME,
+    is_transformer = False
+)
+
+# Away Team
+regressor2 = s3_helpers.load_transformer_s3_pickle(
+    constants.AWAY_MODEL_NAME,
     is_transformer = False
 )
 
@@ -100,9 +106,8 @@ with col1:
     # Left panel for overall information
     st.header("Upcoming Fixtures Information")
     
-    
     # Table of the predictions
-    st.write("Predictions:")
+    st.subheader("Predictions:")
     st.dataframe(pred_df)
     
     # Table
@@ -110,14 +115,14 @@ with col1:
     <div class="fwp-embed" data-url="premier-league/league-table"></div>
     <script src="https://www.footballwebpages.co.uk/embed.js" defer></script>
     """
-    st.write("Premier League Table")
+    st.subheader("Premier League Table")
     st.components.v1.html(html_code, height=300)
     
     # Shap summary
     shap_values, features = visualisations.get_shap_values(
         transformed_data, regressor1
     )
-    st.write("SHAP Summary:")
+    st.subheader("SHAP Summary: Home Team")
     shap.initjs()
     plt.figure(figsize=(10, 6))
     shap.summary_plot(
@@ -126,6 +131,23 @@ with col1:
         show=True
     )
     plt.title('Prediction for Home Team Goals')
+    plt.xlabel('Shap Impact')
+    st.pyplot(plt)
+    
+    # Shap summary
+    shap_values, features = visualisations.get_shap_values(
+        transformed_data, regressor2
+    )
+    
+    st.subheader("SHAP Summary: Away Team")
+    shap.initjs()
+    plt.figure(figsize=(10, 6))
+    shap.summary_plot(
+        shap_values, 
+        transformed_data[regressor2.feature_names_],
+        show=True
+    )
+    plt.title('Prediction for Away Team Goals')
     plt.xlabel('Shap Impact')
     st.pyplot(plt)
 
@@ -153,12 +175,22 @@ with col2:
     st.pyplot(fig)
     
     # Waterfall
-    st.subheader(f"Prediction Reason")
+    st.subheader(f"Home Team Goals")
     
     # Plot
     fig, ax = visualisations.create_waterfall(
             transformed_data, 
             regressor1,
+            selected_fixture
+    )
+    st.pyplot(fig)
+    
+    st.subheader(f"Away Team Goals")
+    
+    # Plot
+    fig, ax = visualisations.create_waterfall(
+            transformed_data, 
+            regressor2,
             selected_fixture
     )
     st.pyplot(fig)
