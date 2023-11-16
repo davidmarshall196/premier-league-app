@@ -11,7 +11,20 @@ from sklearn.model_selection import train_test_split
 import catboost as ctb
 import numpy as np
 import pandas as pd
+import mlflow
+import mlflow.catboost
 
+# import constants
+try:
+    from premier_league import config as config
+except ModuleNotFoundError:
+    import config
+    
+db_uri = f"postgresql+psycopg2://postgres:{config.RDS_DB_PASSWORD}@{config.RDS_ENDPOINT}:5432/{config.RDS_DB_ID}" 
+
+mlflow.set_tracking_uri(db_uri)    
+mlflow.set_experiment("premier-league-experiments")
+    
 def optimise_hyperparameters_xgboost(
     x_train: pd.DataFrame,
     y_train: pd.Series,
@@ -255,48 +268,52 @@ def train_model(
     x_train: pd.DataFrame,
     y_train: pd.Series,
     hyperparameters: Union[dict, None] = None,
-    classification: bool = True,
+    model_type: str = 'result',
     verbose: bool = False
-) -> ctb.CatBoostClassifier:
-    """Train XGBoost Classifier, optionally specifiy hyperparemeters, or save model.
+) -> Union[ctb.CatBoostClassifier, ctb.CatBoostRegressor]:
+    """Train CatBoost Classifier or Regressor, optionally specify hyperparameters.
 
     Args:
         x_train (pandas.DataFrame): Data upon which to train.
         y_train (pandas.Series): Target column.
-        classification: whether the problem is classification or regression.
-        verbose: whether to print the verbose output from catboost.
+        classification (bool): Whether the problem is classification or regression.
+        verbose (bool): Whether to print the verbose output from catboost.
 
     Returns:
-        (xgboost.Classifier): Trained CatBoost model.
-
+        Trained CatBoost model.
     """
+    if model_type.lower() not in ['result', 'home', 'away']:
+        raise ValueError('Model type should be "result", "home" or "away".')
+    
+    # Detect categorical features
     if 'category' in x_train.dtypes.values:
         cat_features = list(x_train.select_dtypes('category').columns)
     else:
         cat_features = []
-    
-    if classification:
-        if hyperparameters:
-            model = ctb.CatBoostClassifier(
-                cat_features=cat_features,
-                **hyperparameters
-            )
+
+    # Start an MLFlow run
+    with mlflow.start_run() as run:
+        if model_type.lower() == 'result':
+            model_class = ctb.CatBoostClassifier
         else:
-            model = ctb.CatBoostClassifier(cat_features=cat_features)
-        
+            model_class = ctb.CatBoostRegressor
+
+        # Create and fit the model
+        model = model_class(cat_features=cat_features, **(hyperparameters or {}))
         model.fit(x_train, y_train, verbose=verbose)
-    else:
-        if hyperparameters:
-            model = ctb.CatBoostRegressor(
-                cat_features=cat_features,
-                **hyperparameters
-            )
-        else:
-            model = ctb.CatBoostRegressor(cat_features=cat_features)
+
+        # Log hyperparameters and other relevant information
+        mlflow.log_params(hyperparameters or {})
+        mlflow.log_param("Model type", model_type)
+        mlflow.log_param("verbose", verbose)
+
+        # Log the model
+        mlflow.catboost.log_model(model, "model")
         
-        model.fit(x_train, y_train, verbose=verbose)
-    
-    return model
+        # Save run ID
+        run_id = run.info.run_id
+
+    return model, run_id
 
 def add_result_prediction(input_data, predictions):
     result = pd.concat([input_data, predictions])

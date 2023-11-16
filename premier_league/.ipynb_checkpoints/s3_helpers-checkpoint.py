@@ -141,61 +141,6 @@ def save_data_s3(
         raise Exception(f"An unexpected error occurred: {str(e)}")
 
 
-def load_transformer_s3_pickle(
-    file_path: str,
-    bucket: str = constants.S3_BUCKET,
-    profile_name: Optional[str] = "premier-league-app",
-    is_transformer: Optional[bool] = True
-):
-    """
-    Load a scikit-learn transformer object from a pickle file on an S3 bucket.
-
-    :param bucket: Name of the S3 bucket.
-    :param file_path: Path where the pickle file is stored within the S3 bucket.
-    :param profile_name: AWS profile name (optional).
-    :return: The loaded transformer object.
-    """
-    try:
-        # The profile name is optional and used for local development
-        if profile_name:
-            session = boto3.Session(profile_name=profile_name)
-        else:
-            # Use environment variables for AWS credentials
-            session = boto3.Session(
-                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-                region_name="eu-west-2"  # or your AWS region
-            )
-        
-        s3 = session.client("s3")
-        response = s3.get_object(Bucket=bucket, Key=file_path)
-        
-        if is_transformer:
-            # Read the content as a byte string
-            serialised_transformer = response['Body'].read()
-
-            # Deserialise the byte string back into a Python object
-            transformer = pickle.loads(serialised_transformer)
-        else:
-            # Read the object (which is file-like) using BytesIO
-            with BytesIO(response['Body'].read()) as f:
-                # Load the transformer object from the BytesIO 
-                transformer = pickle.load(f)
-        return transformer
-
-    except NoCredentialsError:
-        raise NoCredentialsError(
-            "Credentials not available. Make sure the profile "
-            "name is correct and the credentials are set up properly."
-        )
-    except PartialCredentialsError:
-        raise PartialCredentialsError(
-            "Incomplete credentials. Please check your AWS configuration."
-        )
-    except Exception as e:
-        raise Exception(f"An unexpected error occurred: {str(e)}")
-
-
 def save_transformer_s3_pickle(
     transformer,
     file_path: str,
@@ -254,6 +199,79 @@ def save_transformer_s3_pickle(
             "Incomplete credentials. Please check your AWS configuration."
         )
         
+
+def get_latest_model_file(bucket, prefix, session):
+    s3_client = session.client('s3')
+    response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+
+    latest_model = None
+    latest_date = None
+
+    for obj in response.get('Contents', []):
+        filename = obj['Key']
+        file_date_str = filename.split('_')[-1].split('.')[0]  # Assumes 'modelname_YYYYMMDD.pkl'
+        file_date = datetime.strptime(file_date_str, "%Y%m%d")
+
+        if not latest_date or file_date > latest_date:
+            latest_date = file_date
+            latest_model = filename
+
+    return latest_model
+
+def load_transformer_s3_pickle(
+    prefix: str,
+    bucket: str = constants.S3_BUCKET,
+    profile_name: Optional[str] = "premier-league-app",
+    is_transformer: Optional[bool] = True
+):
+    """
+    Load the latest scikit-learn transformer object from a pickle file on an S3 bucket.
+
+    :param bucket: Name of the S3 bucket.
+    :param prefix: Prefix of the file path where the pickle files are stored in the S3 bucket.
+    :param profile_name: AWS profile name (optional).
+    :return: The loaded transformer object.
+    """
+    try:
+        # Session setup
+        if profile_name:
+            session = boto3.Session(profile_name=profile_name)
+        else:
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name="eu-west-2"  # or your AWS region
+            )
+
+        # Get the latest model file
+        latest_file = get_latest_model_file(bucket, prefix, session)
+        if not latest_file:
+            raise FileNotFoundError("No model files found with the given prefix.")
+
+        s3 = session.client("s3")
+        response = s3.get_object(Bucket=bucket, Key=latest_file)
+
+        if is_transformer:
+            serialised_transformer = response['Body'].read()
+            transformer = pickle.loads(serialised_transformer)
+        else:
+            with BytesIO(response['Body'].read()) as f:
+                transformer = pickle.load(f)
+
+        return transformer
+
+    except NoCredentialsError:
+        raise NoCredentialsError(
+            "Credentials not available. Ensure the profile "
+            "name is correct and credentials are set up properly."
+        )
+    except PartialCredentialsError:
+        raise PartialCredentialsError(
+            "Incomplete credentials. Please check your AWS configuration."
+        )
+    except Exception as e:
+        raise Exception(f"An unexpected error occurred: {str(e)}")
+
 def load_and_display_image_from_s3(
     team_name,
     bucket_name: str = constants.S3_BUCKET,

@@ -5,7 +5,8 @@ from sklearn import metrics
 def evaluate_model(
     predictions: list, 
     actual_values: list,
-    classification: bool = True
+    model_type: str = 'result',
+    run_id: str = None
 ) -> dict:
     """Evaluate a model on test data.
 
@@ -16,8 +17,11 @@ def evaluate_model(
     Returns:
         evaluation_metrics (dict): Key-value pairs of metric names and values.
     """
+    if model_type.lower() not in ['result', 'home', 'away']:
+        raise ValueError('Model type should be "result", "home" or "away".')
+    
     evaluation_metrics = {}
-    if classification:
+    if model_type == 'result':
         evaluation_metrics["mcc"] = metrics.matthews_corrcoef(actual_values, predictions)
         evaluation_metrics["accuracy"] = metrics.accuracy_score(actual_values, predictions)
         evaluation_metrics["f1"] = metrics.f1_score(actual_values, predictions,
@@ -29,4 +33,9 @@ def evaluate_model(
         evaluation_metrics["r2_score"] = metrics.r2_score(actual_values, predictions)
         evaluation_metrics["median_ae"] = metrics.median_absolute_error(actual_values, predictions)
         evaluation_metrics["mean_ae"] = metrics.mean_absolute_error(actual_values, predictions)
+        
+    with mlflow.start_run(run_id=run_id) as run:
+        for metric, value in evaluation_metrics.items():
+            if metric != "confusion_matrix":  
+                mlflow.log_metric(metric, value)
     return evaluation_metrics

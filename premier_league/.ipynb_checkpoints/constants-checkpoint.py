@@ -1,3 +1,8 @@
+from datetime import datetime
+
+# Current time
+current_time = datetime.now().strftime("%Y%m%d")
+
 # Reload all data?
 INITIAL_DATA_LOAD = False
 LOCAL_MODE = True
@@ -24,11 +29,11 @@ EXP_LOC = '../data/expectations/exp_prem_results.json'
 
 # Modelling
 MODEL_VERSION = 'v2'
-TRANSFORMER_PATH = f'app_data/transformers/transformer_{MODEL_VERSION}.pkl'
-CLASS_MODEL_NAME = f'app_data/models/classifier_{MODEL_VERSION}.pkl'
-HOME_MODEL_NAME = f'app_data/models/home_regress_model_{MODEL_VERSION}.pkl'
-AWAY_MODEL_NAME = f'app_data/models/away_regress_model_{MODEL_VERSION}.pkl'
-MAX_EVALS = 10
+TRANSFORMER_PATH = f'app_data/transformers/transformer_{MODEL_VERSION}_{current_time}.pkl'
+CLASS_MODEL_NAME = f'app_data/models/classifier_{MODEL_VERSION}_{current_time}.pkl'
+HOME_MODEL_NAME = f'app_data/models/home_regress_model_{MODEL_VERSION}_{current_time}.pkl'
+AWAY_MODEL_NAME = f'app_data/models/away_regress_model_{MODEL_VERSION}_{current_time}.pkl'
+MAX_EVALS = 2
 
 # Names
 TEAM_NAME_REPLACEMENTS = {'Nottingham Forest': "Nott'm Forest",
@@ -36,4 +41,5 @@ TEAM_NAME_REPLACEMENTS = {'Nottingham Forest': "Nott'm Forest",
                           'Man Utd': "Man United",
                           'Sheffield Utd': 'Sheffield United'}
 
-
+# Postgres
+POSTGRES_DB_ID = 'premier-league-logging'
