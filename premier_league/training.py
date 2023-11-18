@@ -17,14 +17,16 @@ import mlflow.catboost
 # import constants
 try:
     from premier_league import config as config
+    from premier_league import constants as constants
 except ModuleNotFoundError:
     import config
+    import constants
     
 db_uri = f"postgresql+psycopg2://postgres:{config.RDS_DB_PASSWORD}@{config.RDS_ENDPOINT}:5432/{config.RDS_DB_ID}" 
 
 mlflow.set_tracking_uri(db_uri)    
 mlflow.set_experiment("premier-league-experiments")
-    
+
 def optimise_hyperparameters_xgboost(
     x_train: pd.DataFrame,
     y_train: pd.Series,
@@ -305,6 +307,7 @@ def train_model(
         # Log hyperparameters and other relevant information
         mlflow.log_params(hyperparameters or {})
         mlflow.log_param("Model type", model_type)
+        mlflow.log_param("Run Date", constants.current_time
         mlflow.log_param("verbose", verbose)
 
         # Log the model

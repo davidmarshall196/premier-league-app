@@ -1,6 +1,6 @@
 """Functions related to evaluating models."""
 from sklearn import metrics
-
+import mlflow
 
 def evaluate_model(
     predictions: list, 
