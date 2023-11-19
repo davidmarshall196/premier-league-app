@@ -4,17 +4,20 @@ from mlflow.tracking import MlflowClient
 from mlflow.entities import Run
 import pandas as pd
 
-def set_mlflow_tracking_uri(tracking_uri: str) -> None:
-    """
-    Set the MLflow tracking server URI for logging and retrieving runs.
+# import constants
+try:
+    from premier_league import config
+    from premier_league import constants
+except ModuleNotFoundError:
+    import config
+    import constants
 
-    Parameters:
-    - tracking_uri (str): The URI of the MLflow tracking server.
 
-    Returns:
-    None
-    """
-    mlflow.set_tracking_uri(tracking_uri)
+def open_mlflow_tracking(experiment_name=constants.EXP_NAME):
+    db_uri = f"postgresql+psycopg2://postgres:{config.RDS_DB_PASSWORD}@{config.RDS_ENDPOINT}:5432/{config.RDS_DB_ID}" 
+
+    mlflow.set_tracking_uri(db_uri)    
+    mlflow.set_experiment(experiment_name)
 
 
 def get_all_experiments(client: MlflowClient) -> List[dict]:
@@ -27,7 +30,7 @@ def get_all_experiments(client: MlflowClient) -> List[dict]:
     Returns:
     List[dict]: A list of experiments, each represented as a dictionary.
     """
-    experiments = client.list_experiments()
+    experiments = client.search_experiments()
     return [{"name": exp.name, "experiment_id": exp.experiment_id} for exp in experiments]
 
 def get_runs_from_experiment(client: MlflowClient, experiment_id: str) -> List[Run]:

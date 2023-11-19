@@ -33,7 +33,7 @@ TRANSFORMER_PATH = f'app_data/transformers/transformer_{MODEL_VERSION}_{current_
 CLASS_MODEL_NAME = f'app_data/models/classifier_{MODEL_VERSION}_{current_time}.pkl'
 HOME_MODEL_NAME = f'app_data/models/home_regress_model_{MODEL_VERSION}_{current_time}.pkl'
 AWAY_MODEL_NAME = f'app_data/models/away_regress_model_{MODEL_VERSION}_{current_time}.pkl'
-MAX_EVALS = 2
+MAX_EVALS = 10
 
 # Names
 TEAM_NAME_REPLACEMENTS = {'Nottingham Forest': "Nott'm Forest",

@@ -1,12 +1,48 @@
 import boto3
 from botocore.exceptions import ClientError
 from typing import Optional
+import time
 
 # import constants
 try:
     from premier_league import constants as constants
 except ImportError:
     import constants
+
+def get_instance_status(
+    instance_identifier: str,
+    profile_name: Optional[str] = "premier-league-app"
+) -> str:
+    """
+    Get the current status of an RDS instance.
+
+    Parameters:
+    - instance_identifier (str): The identifier of the RDS instance.
+    - profile_name (Optional[str]): The name of the profile to use (if not default).
+
+    Returns:
+    str: The current status of the RDS instance.
+    """
+    try:
+        if constants.LOCAL_MODE:
+            session = boto3.Session(
+                profile_name=profile_name
+            )
+            client = session.client('rds')
+
+        response = client.describe_db_instances(DBInstanceIdentifier=instance_identifier)
+        db_instances = response.get('DBInstances', [])
+
+        if not db_instances:
+            raise Exception(f"No RDS instance found with identifier {instance_identifier}.")
+
+        # Assuming there's always only one instance with the given identifier
+        instance_info = db_instances[0]
+        current_status = instance_info.get('DBInstanceStatus')
+        return current_status
+
+    except ClientError as e:
+        raise Exception(f"Error retrieving RDS instance status: {e}")
 
 def wait_for_instance_status(
     instance_identifier, 
