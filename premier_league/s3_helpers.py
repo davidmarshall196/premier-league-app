@@ -1,7 +1,12 @@
 from typing import Optional
 import boto3
 import pandas as pd
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
+from botocore.exceptions import (
+    NoCredentialsError, 
+    PartialCredentialsError, 
+    ClientError
+)
+from botocore.client import Config
 from PIL import Image
 import io
 import os
@@ -200,7 +205,11 @@ def save_transformer_s3_pickle(
         )
         
 
-def get_latest_model_file(bucket, prefix, session):
+def get_latest_model_file(
+    bucket, 
+    prefix, 
+    session
+):
     s3_client = session.client('s3')
     response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
 
@@ -209,7 +218,7 @@ def get_latest_model_file(bucket, prefix, session):
 
     for obj in response.get('Contents', []):
         filename = obj['Key']
-        file_date_str = filename.split('_')[-1].split('.')[0]  # Assumes 'modelname_YYYYMMDD.pkl'
+        file_date_str = filename.split('_')[-1].split('.')[0]  
         file_date = datetime.strptime(file_date_str, "%Y%m%d")
 
         if not latest_date or file_date > latest_date:
@@ -353,3 +362,26 @@ def display_side_by_side_images(
 
     # Display the combined image in Streamlit
     st.image(combined_image)
+
+def json_to_s3(data_dict: dict, bucket_name: str, object_key: str) -> None:
+    """
+    Uploads a Python dictionary as a JSON file to an S3 bucket.
+
+    Parameters:
+    - data_dict (dict): The dictionary to upload.
+    - bucket_name (str): The name of the S3 bucket.
+    - object_key (str): The key (filename) under which to store the object
+                        in the S3 bucket.
+
+    Returns:
+    - None
+    """
+    # Initialise S3 client with config
+    config = Config(signature_version="s3v4", region_name="eu-west-2")
+    s3 = boto3.client("s3", config=config)
+
+    # Convert the dictionary to a JSON string
+    json_str = json.dumps(data_dict)
+
+    # Upload the JSON string to the specified S3 bucket
+    s3.put_object(Body=json_str, Bucket=bucket_name, Key=object_key)

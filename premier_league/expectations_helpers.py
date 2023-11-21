@@ -3,6 +3,20 @@ import json
 
 import great_expectations as ge
 import pandas as pd
+from typing import Optional
+import boto3
+from botocore.exceptions import (
+    NoCredentialsError, 
+    PartialCredentialsError, 
+    ClientError
+)
+from datetime import datetime
+
+# import constants
+try:
+    from premier_league import constants as constants
+except ImportError:
+    import constants
 
 
 class AutoGreatExpectations:
@@ -241,27 +255,56 @@ class AutoGreatExpectations:
         return self.data_ge
 
 
-def save_expectations(data_ge, expectations_path):
-    """Save expectations locally as a json file.
+def save_expectations(
+        data_ge,
+        expectations_path: str,
+        bucket: str = constants.S3_BUCKET,
+        profile_name: Optional[str] = "premier-league-app"
+):
+    """Save expectations locally or to s3.
 
     Args:
         data_ge (expectations object): A Great Expectations object
         from the Great Expectations library.
         expectations_path (string): Full path of the saved file.
+        save_to_s3: Whether to save the file to an S3 Bucket.
+        s3_bucket: S3 bucket to save file to.
 
     Returns:
         None.
     """
-    with open(expectations_path, "w") as expectations_file:
-        expectations_file.write(
-            json.dumps(
-                data_ge.get_expectation_suite(
-                    discard_failed_expectations=False
-                ).to_json_dict()
+    json_file = json.dumps(
+        data_ge.get_expectation_suite(
+            discard_failed_expectations=False).to_json_dict()
+    )
+    if bucket:
+        try:
+            if constants.LOCAL_MODE:
+                session = boto3.Session(profile_name=profile_name)
+            else:
+                session = boto3.Session(
+                    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                    region_name="eu-west-2",
+                )
+        except NoCredentialsError:
+            raise NoCredentialsError(
+                """Credentials not available. Make sure the profile
+                name is correct and the credentials are set up properly."""
             )
-        )
-    print(f"Expectations saved at {expectations_path}")
+        except PartialCredentialsError:
+            raise PartialCredentialsError(
+                "Incomplete credentials. Please check your AWS configuration."
+            )
+        except Exception as e:
+            raise Exception(f"An unexpected error occurred: {str(e)}")
+            
+        s3 = session.client("s3")  # Create a connection to S3
+        s3.put_object(Body=json_file, Bucket=bucket, Key=expectations_path)
 
+    else:
+        with open(expectations_path, "w") as expectations_file:
+            expectations_file.write(json_file)
 
 def validate_data(data: pd.DataFrame, data_expectations: dict) -> dict:
     """Provide a summary of the validation results.
@@ -314,9 +357,56 @@ def view_suite_summary(data_ge):
         exp_count = suite_str.count(exp)
         print(f"{exp}: {exp_count}")
 
+def latest_exp_file(
+    bucket: str = constants.S3_BUCKET,
+    prefix: Optional[str] = 'app_data/expectations/exp_prem_results',
+    profile_name: Optional[str] = "premier-league-app"
+):
+    try:
+        # The profile name is optional and used for local development
+        if profile_name:
+            session = boto3.Session(profile_name=profile_name)
+        else:
+            # Use environment variables for AWS credentials
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name="eu-west-2"  # or your AWS region
+            )
+        s3_client = session.client("s3")
+        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        
+        latest_model = None
+        latest_date = None
 
-def load_expectations(expectations_path: str):
-    """Load expectations saved locally from a json file.
+        for obj in response.get('Contents', []):
+            filename = obj['Key']
+            file_date_str = filename.split('_')[-1].split('.')[0]  
+            file_date = datetime.strptime(file_date_str, "%Y%m%d")
+
+        if not latest_date or file_date > latest_date:
+            latest_date = file_date
+            latest_model = filename
+
+        return latest_model
+    
+    except NoCredentialsError:
+        raise NoCredentialsError(
+            "Credentials not available. Make sure the profile "
+            "name is correct and the credentials are set up properly."
+        )
+    except PartialCredentialsError:
+        raise PartialCredentialsError(
+            "Incomplete credentials. Please check your AWS configuration."
+        )
+        
+
+def load_latest_expectations(
+    expectations_path: str, 
+    s3_bucket: str = constants.S3_BUCKET,
+    profile_name: Optional[str] = "premier-league-app"
+):
+    """Load latest expectations from S3.
 
     Args:
         expectations_path (string): Full path of the file containing
@@ -325,10 +415,33 @@ def load_expectations(expectations_path: str):
     Returns:
         data_expectations (expectations object): JSON of expectations.
     """
-    with open(expectations_path, "r") as json_file:
-        data_expectations = json.load(json_file)
-    print(f"Expectations loaded from {expectations_path}")
-    return data_expectations
+    try:
+        # The profile name is optional and used for local development
+        if profile_name:
+            session = boto3.Session(profile_name=profile_name)
+        else:
+            # Use environment variables for AWS credentials
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name="eu-west-2"  # or your AWS region
+            )
+        s3_client = session.resource("s3")
+        content_object = s3_client.Object(s3_bucket, expectations_path)
+        file_content = content_object.get()["Body"].read().decode("utf-8")
+        data_expectations = json.loads(file_content)
+        return data_expectations
+        
+    except NoCredentialsError:
+        raise NoCredentialsError(
+            "Credentials not available. Make sure the profile "
+            "name is correct and the credentials are set up properly."
+        )
+    except PartialCredentialsError:
+        raise PartialCredentialsError(
+            "Incomplete credentials. Please check your AWS configuration."
+        )
+    
 
 
 def view_full_suite(data_ge):

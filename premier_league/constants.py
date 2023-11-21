@@ -23,9 +23,10 @@ LOG_FOLDER = 'app_data/logging'
 LOG_LEVEL = 'INFO'
 
 # Data expectations
-RUN_DATA_EXPECTATIONS = False
+RUN_DATA_EXPECTATIONS = True
 EXPECTATIONS_LOCATION = "../data/expectations"
 EXP_LOC = '../data/expectations/exp_prem_results.json'
+VALIDATION_TOPIC = 'arn:aws:sns:eu-west-2:372535189767:sns-data-validation-alert'
 
 # Modelling
 MODEL_VERSION = 'v2'
