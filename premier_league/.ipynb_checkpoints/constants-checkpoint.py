@@ -17,6 +17,7 @@ TRAINING_DATA_LOCATION = "app_data/training_data_full.csv"
 PREDICTIONS_LOCATION = "app_data/transformed_data_predictions.csv"
 STADIUM_DATA_LOCATION = "app_data/stadiums-with-GPS-coordinates.csv"
 TRANSFORMED_DATA_LOCATION = "app_data/transformed_data_cc.csv"
+HISTORICAL_DATA_DRIFT =  "app_data/historical_pl_data.csv"
 
 # Logging
 LOG_FOLDER = 'app_data/logging'
@@ -27,6 +28,11 @@ RUN_DATA_EXPECTATIONS = True
 EXPECTATIONS_LOCATION = "../data/expectations"
 EXP_LOC = '../data/expectations/exp_prem_results.json'
 VALIDATION_TOPIC = 'arn:aws:sns:eu-west-2:372535189767:sns-data-validation-alert'
+VALIDATION_RESULTS_PATH = f'app_data/expectations/valid_results_{current_time}.json'
+
+# Data drift
+DRIFT_REPORT_LOC = f"app_data/data_drift_reports/drift_report_{current_time}.html"
+DRIFT_TOPIC = 'arn:aws:sns:eu-west-2:372535189767:sns-data-drift-report'
 
 # Modelling
 MODEL_VERSION = 'v2'

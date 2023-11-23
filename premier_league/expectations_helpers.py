@@ -259,6 +259,7 @@ def save_expectations(
         data_ge,
         expectations_path: str,
         bucket: str = constants.S3_BUCKET,
+        validation_results: bool = False,
         profile_name: Optional[str] = "premier-league-app"
 ):
     """Save expectations locally or to s3.
@@ -273,10 +274,13 @@ def save_expectations(
     Returns:
         None.
     """
-    json_file = json.dumps(
-        data_ge.get_expectation_suite(
-            discard_failed_expectations=False).to_json_dict()
-    )
+    if not validation_results:
+        json_file = json.dumps(
+            data_ge.get_expectation_suite(
+                discard_failed_expectations=False).to_json_dict()
+        )
+    else:
+        json_file = json.dumps(data_ge.to_json_dict())
     if bucket:
         try:
             if constants.LOCAL_MODE:
@@ -306,7 +310,11 @@ def save_expectations(
         with open(expectations_path, "w") as expectations_file:
             expectations_file.write(json_file)
 
-def validate_data(data: pd.DataFrame, data_expectations: dict) -> dict:
+def validate_data(
+    data: pd.DataFrame, 
+    data_expectations: dict,
+    expectations_path: str
+) -> dict:
     """Provide a summary of the validation results.
 
     Args:
@@ -328,6 +336,13 @@ def validate_data(data: pd.DataFrame, data_expectations: dict) -> dict:
             if not result["success"]:
                 print(result)
         raise Exception("Data does not meet expectations!")
+    save_expectations(
+        validation_results,
+        expectations_path = expectations_path,
+        bucket = constants.S3_BUCKET,
+        validation_results = True
+    )
+        
     return validation_results.to_json_dict()
 
 

@@ -1,8 +1,25 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from pandas import DataFrame
 from evidently.report import Report
 from evidently.metric_preset import DataDriftPreset
+import boto3
+from botocore.exceptions import (
+    NoCredentialsError, 
+    PartialCredentialsError, 
+    ClientError
+)
+from boto3.exceptions import Boto3Error
+from io import (BytesIO, StringIO)
+import tempfile
+import os
 
+# import constants
+try:
+    from premier_league import constants as constants
+    from premier_league import email_functions
+except ImportError:
+    import constants
+    import email_functions
 
 class DriftDetector:
     """
@@ -30,30 +47,78 @@ class DriftDetector:
         self.current_data = current_data
 
     def create_report(
-        self,
-        report_location: str = "drift_report.html"
+        self, 
+        object_name: str, 
+        bucket_name: str = constants.S3_BUCKET, 
+        profile_name: Optional[str] = 'premier-league-app'
     ) -> Dict[str, Any]:
         """
-        Create a data drift report using Evidently's DataDriftPreset.
+        Create a data drift report and save it directly to S3.
 
         Args:
-            report_location (str) : File report will be created to.
+            bucket_name (str): Name of the S3 bucket.
+            object_name (str): S3 object name (path and filename).
+            profile_name (str): AWS profile name (optional).
 
         Returns:
-            Dict[str, Any]: A dictionary containing the data drift report.
+            Dict[str, Any]: A dictionary containing the data drift 
+            report.
         """
-        report = Report(metrics=[DataDriftPreset()])
-        report.run(
-            reference_data=self.reference_data,
-            current_data=self.current_data
-        )
-        report.save_html(report_location)
-        print(f"HTML report saved at {report_location}")
-        return report.as_dict()
+        try:
+            # Setup AWS session
+            if profile_name:
+                session = boto3.Session(profile_name=profile_name)
+            else:
+                session = boto3.Session(
+                    aws_access_key_id=os.getenv(
+                        "AWS_ACCESS_KEY_ID"),
+                    aws_secret_access_key=os.getenv(
+                        "AWS_SECRET_ACCESS_KEY"),
+                    region_name="eu-west-2"  # or your AWS region
+                )
+            
+            s3_client = session.client("s3")
+
+            # Create the report
+            report = Report(metrics=[DataDriftPreset()])
+            report.run(
+                reference_data=self.reference_data,
+                current_data=self.current_data
+            )
+
+            # Use BytesIO to get the report HTML
+            with StringIO() as buffer:
+                report.save_html(buffer)
+                buffer.seek(0)
+                report_html = buffer.read()
+
+            # Save the report directly to S3
+            s3_client.put_object(
+                Bucket=bucket_name, 
+                Key=object_name, 
+                Body=report_html
+            )
+            print(f"HTML report saved to {bucket_name}/{object_name}")
+            return report.as_dict()
+
+
+        except NoCredentialsError:
+            raise NoCredentialsError(
+                "Credentials not available. Make sure the profile "
+                "name is correct and the credentials are set up properly."
+            )
+        except PartialCredentialsError:
+            raise PartialCredentialsError(
+                "Incomplete credentials. Please check your AWS configuration."
+            )
+        except Boto3Error as e:
+            raise RuntimeError(f"An error occurred with AWS: {str(e)}")
+
 
     def check_data_drift(
         self,
-        report_location: str = "drift_report.html"
+        report_location: str,
+        bucket_name: str = constants.S3_BUCKET, 
     ) -> None:
         """
         Check for data drift in the current data against the reference data.
@@ -62,7 +127,10 @@ class DriftDetector:
         Args:
             report_location (str) : The drift report file to be checked.
         """
-        data_dict = self.create_report(report_location=report_location)
+        data_dict = self.create_report(
+            object_name=report_location,
+            bucket_name = bucket_name
+        )
         data_drift_metric_result = None
 
         for metric in data_dict["metrics"]:
@@ -79,4 +147,10 @@ class DriftDetector:
             data_drift_metric_result
             and data_drift_metric_result["number_of_drifted_columns"] > 0
         ):
-            raise ValueError("Columns have drifted. Check report")
+            email_functions.send_email(
+                'data_drift',
+                constants.S3_BUCKET, 
+                report_location,
+                constants.DRIFT_TOPIC
+            )
+            return None

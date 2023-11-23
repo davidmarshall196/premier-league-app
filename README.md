@@ -35,8 +35,8 @@ The app uses [Catboost](https://catboost.ai/) for the underlying predictions. Th
 - Logging
 - MLFLow integration
 - Scheduling
+- Deployment
 - Flake8 + Black
 - More unit tests
 - Fix Functions (docs, types)
-- Data validation and drift
-- Email notfications
+- Git hooks

@@ -9,14 +9,7 @@ try:
         visualisations
     )
     if constants.RUN_DATA_EXPECTATIONS:
-        from premier_league.expectations_helpers import (
-            AutoGreatExpectations,
-            view_full_suite,
-            view_suite_summary,
-            save_expectations,
-            load_expectations,
-            validate_data
-        )
+        from premier_league import expectations_helpers
 except ImportError:
     import constants
     import data_extraction
