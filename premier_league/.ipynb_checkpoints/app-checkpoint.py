@@ -26,6 +26,11 @@ stadium_data = s3_helpers.grab_data_s3(
     constants.STADIUM_DATA_LOCATION
 )
 
+# Model performance
+model_performance = s3_helpers.grab_data_s3(
+    constants.MODEL_PERFORMANCE_LOCATION
+)
+
 # Home Team
 regressor1 = s3_helpers.load_transformer_s3_pickle(
     constants.HOME_MODEL_NAME,
@@ -150,6 +155,18 @@ with col1:
     plt.title('Prediction for Away Team Goals')
     plt.xlabel('Shap Impact')
     st.pyplot(plt)
+
+    plt.title('Match Result Performance')
+    visualisations.plot_performance_metrics_result(
+        model_performance
+    )
+    st.pyplot() 
+
+    plt.title('Home and Away Goals Performance')
+    visualisations.plot_mean_absolute_error_home_away(
+        model_performance
+    )
+    st.pyplot() 
 
 
 # Embed the table in the right column

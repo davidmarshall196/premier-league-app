@@ -6,6 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 from datetime import datetime
 import numpy as np
+from typing import Any
 from colorama import init, Fore, Style
 from tabulate import tabulate
 from pandas import DataFrame
@@ -68,15 +69,6 @@ def shap_summary():
     )
     plt.title('Result Prediction Feature Importances')
     plt.xlabel('Shap Impact')
-    #scores_desc = list(zip(shap_values[0][0],
-    #                       transformed_data[classifier.feature_names_]))
-    #scores_desc = sorted(scores_desc)[0:10]
-    #fig_m = plt.figure(tight_layout=True)
-    #plt.barh([s[1] for s in scores_desc], [s[0] for s in scores_desc])
-    #plt.title("Feature Shap Values")
-    #plt.ylabel("Shap Value")
-    #plt.xlabel("Feature")
-    #plt.tight_layout()
     return fig_m
 
 def actuals_predicted(x_test, ha='Home'):
@@ -490,5 +482,80 @@ def create_waterfall(transformed_data, regression_model, fixture):
         feature_names=transformed_data[regression_model.feature_names_].columns.tolist()))
     
     return fig, ax
-        
+
+def plot_mean_absolute_error_home_away(df: pd.DataFrame) -> Any:
+    """
+    Plots the Mean Absolute Error over time for 'home' and 'away' models from a given DataFrame.
+
+    The function filters for 'home' and 'away' models, groups the data by run date and model type,
+    and selects the model with the lowest mean absolute error for each date. It then plots these
+    values over time for both model types.
+
+    Parameters:
+    df (pd.DataFrame): DataFrame containing the model data. Must include columns 'Model type',
+                       'Run Date', and 'mean_ae'.
+
+    Returns:
+    Matplotlib plot object
+    """
+    df['Run Date'] = pd.to_datetime(df['Run Date'], format='%Y%m%d')
+    # Filter for 'home' and 'away' models only
+    df_filtered = df[df['Model type'].isin(['home', 'away'])]
+
+    # Group by Run Date and Model type, and take the model with the lowest mean_ae
+    df_best = df_filtered.groupby(['Run Date', 'Model type']).apply(lambda x: x.nsmallest(1, 'mean_ae')).reset_index(drop=True)
+
+    # Pivot the data for plotting
+    df_pivot = df_best.pivot(index='Run Date', columns='Model type', values='mean_ae')
+
+    # Creating the figure and axes
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(df_pivot.index, df_pivot['home'], label='Home Model', marker='o')
+    ax.plot(df_pivot.index, df_pivot['away'], label='Away Model', marker='x')
+    ax.set_title('Mean Absolute Error Over Time for Home and Away Models')
+    ax.set_xlabel('Run Date')
+    ax.set_ylabel('Mean Absolute Error')
+    ax.legend()
+    ax.grid(True)
+
+    return fig
+
+def plot_performance_metrics_result(df: pd.DataFrame) -> Any:
+    """
+    Plots the MCC, Accuracy, and F1 Score over time for 'result' models from a given DataFrame.
+
+    The function filters for 'result' models, groups the data by run date, and selects the model
+    with the lowest mean absolute error for each date. It then plots the MCC, Accuracy, and F1 Score
+    values over time.
+
+    Parameters:
+    df (pd.DataFrame): DataFrame containing the model data. Must include columns 'Model type',
+                       'Run Date', 'mcc', 'accuracy', and 'f1'.
+
+    Returns:
+    Matplotlib plot object
+    """
+    df['Run Date'] = pd.to_datetime(df['Run Date'], format='%Y%m%d')
+    # Filter the data for 'result' models only
+    df_result = df[df['Model type'] == 'result']
+
+    # Group by Run Date and take the model with the best (lowest) mean_ae
+    df_best_result = df_result.groupby('Run Date').apply(lambda x: x.nsmallest(1, 'mean_ae')).reset_index(drop=True)
+
+    # Creating the figure and axes
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(df_best_result['Run Date'], df_best_result['mcc'], label='MCC', marker='o')
+    ax.plot(df_best_result['Run Date'], df_best_result['accuracy'], label='Accuracy', marker='x')
+    ax.plot(df_best_result['Run Date'], df_best_result['f1'], label='F1 Score', marker='^')
+    ax.set_title('MCC, Accuracy, and F1 Score Over Time for Result Models')
+    ax.set_xlabel('Run Date')
+    ax.set_ylabel('Score')
+    ax.legend()
+    ax.grid(True)
+
+    return fig
+
+
+
+
     

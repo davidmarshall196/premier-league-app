@@ -331,34 +331,44 @@ def load_and_display_image_from_s3(
         )
     
 def display_side_by_side_images(
-    bucket_name, 
-    image_names, 
-    aws_access_key_id, 
-    aws_secret_access_key):
+    fixture,
+    bucket_name: str = constants.S3_BUCKET,
+    scale_factor: float = constants.BADGE_SCALE_FACTOR
+):
     """
     Display two images side by side in Streamlit.
 
     :param bucket_name: Name of the S3 bucket
     :param image_names: List of two image names in S3
-    :param aws_access_key_id: AWS Access Key ID
-    :param aws_secret_access_key: AWS Secret Access Key
     """
-    images = [load_image_from_s3(name, bucket_name
+    image_1 = fixture.split(' v ')[0].replace(' ','_') + '.png'
+    image_2 = fixture.split(' v ')[1].replace(' ','_') + '.png'
+    image_1 = f'app_data/badges/{image_1}'
+    image_2 = f'app_data/badges/{image_2}'
+    image_names = [image_1, image_2]
+    
+    images = [load_and_display_image_from_s3(name, bucket_name
                                 ) for name in image_names]
     
-    # Find the max height of the two images
-    max_height = max(image.size[1] for image in images)
+    # Find the max height of the two images and apply the scale factor
+    max_height = int(max(image.size[1] for image in images) * scale_factor)
 
-    # Resize images to have the same height
-    resized_images = [image.resize((int(image.width * max_height / image.height), max_height)) for image in images]
+    # Resize images to have the scaled height while preserving aspect ratio
+    resized_images = [
+        image.resize((int(image.width * max_height / image.height), max_height))
+        for image in images
+    ]
 
-    # Combine images side by side
     total_width = sum(image.size[0] for image in resized_images)
-    combined_image = Image.new('RGB', (total_width, max_height))
+    combined_image = Image.new('RGBA', (total_width, max_height), (255, 255, 255, 0))
     x_offset = 0
     for image in resized_images:
-        combined_image.paste(image, (x_offset, 0))
+        # Convert to 'RGBA' if necessary
+        if image.mode != 'RGBA':
+            image = image.convert('RGBA')
+        combined_image.paste(image, (x_offset, 0), image)  # Use image itself as mask for transparency
         x_offset += image.size[0]
+
 
     # Display the combined image in Streamlit
     st.image(combined_image)

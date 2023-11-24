@@ -17,14 +17,7 @@ except ImportError:
     import prediction
     import visualisations
     if constants.RUN_DATA_EXPECTATIONS:
-        from expectations_helpers import (
-            AutoGreatExpectations,
-            view_full_suite,
-            view_suite_summary,
-            save_expectations,
-            load_expectations,
-            validate_data
-        )
+        import expectations_helpers
 import joblib
 from tabulate import tabulate
 import runpy

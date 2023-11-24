@@ -18,6 +18,7 @@ PREDICTIONS_LOCATION = "app_data/transformed_data_predictions.csv"
 STADIUM_DATA_LOCATION = "app_data/stadiums-with-GPS-coordinates.csv"
 TRANSFORMED_DATA_LOCATION = "app_data/transformed_data_cc.csv"
 HISTORICAL_DATA_DRIFT =  "app_data/historical_pl_data.csv"
+MODEL_PERFORMANCE_LOCATION = "app_data/model_performance/model_performance_data.csv"
 
 # Logging
 LOG_FOLDER = 'app_data/logging'
@@ -47,6 +48,9 @@ TEAM_NAME_REPLACEMENTS = {'Nottingham Forest': "Nott'm Forest",
                           'Spurs': "Tottenham",
                           'Man Utd': "Man United",
                           'Sheffield Utd': 'Sheffield United'}
+
+# App
+BADGE_SCALE_FACTOR = 0.5
 
 # Postgres
 POSTGRES_DB_ID = 'premier-league-logging'

@@ -1,7 +1,12 @@
 from typing import Optional
 import boto3
 import pandas as pd
-from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
+from botocore.exceptions import (
+    NoCredentialsError, 
+    PartialCredentialsError, 
+    ClientError
+)
+from botocore.client import Config
 from PIL import Image
 import io
 import os
@@ -200,7 +205,11 @@ def save_transformer_s3_pickle(
         )
         
 
-def get_latest_model_file(bucket, prefix, session):
+def get_latest_model_file(
+    bucket, 
+    prefix, 
+    session
+):
     s3_client = session.client('s3')
     response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
 
@@ -209,7 +218,7 @@ def get_latest_model_file(bucket, prefix, session):
 
     for obj in response.get('Contents', []):
         filename = obj['Key']
-        file_date_str = filename.split('_')[-1].split('.')[0]  # Assumes 'modelname_YYYYMMDD.pkl'
+        file_date_str = filename.split('_')[-1].split('.')[0]  
         file_date = datetime.strptime(file_date_str, "%Y%m%d")
 
         if not latest_date or file_date > latest_date:
@@ -322,34 +331,67 @@ def load_and_display_image_from_s3(
         )
     
 def display_side_by_side_images(
-    bucket_name, 
-    image_names, 
-    aws_access_key_id, 
-    aws_secret_access_key):
+    fixture,
+    bucket_name: str = constants.S3_BUCKET,
+    scale_factor: float = constants.BADGE_SCALE_FACTOR
+):
     """
     Display two images side by side in Streamlit.
 
     :param bucket_name: Name of the S3 bucket
     :param image_names: List of two image names in S3
-    :param aws_access_key_id: AWS Access Key ID
-    :param aws_secret_access_key: AWS Secret Access Key
     """
-    images = [load_image_from_s3(name, bucket_name
+    image_1 = fixture.split(' v ')[0].replace(' ','_') + '.png'
+    image_2 = fixture.split(' v ')[1].replace(' ','_') + '.png'
+    image_1 = f'app_data/badges/{image_1}'
+    image_2 = f'app_data/badges/{image_2}'
+    image_names = [image_1, image_2]
+    
+    images = [load_and_display_image_from_s3(name, bucket_name
                                 ) for name in image_names]
     
-    # Find the max height of the two images
-    max_height = max(image.size[1] for image in images)
+    # Find the max height of the two images and apply the scale factor
+    max_height = int(max(image.size[1] for image in images) * scale_factor)
 
-    # Resize images to have the same height
-    resized_images = [image.resize((int(image.width * max_height / image.height), max_height)) for image in images]
+    # Resize images to have the scaled height while preserving aspect ratio
+    resized_images = [
+        image.resize((int(image.width * max_height / image.height), max_height))
+        for image in images
+    ]
 
-    # Combine images side by side
     total_width = sum(image.size[0] for image in resized_images)
-    combined_image = Image.new('RGB', (total_width, max_height))
+    combined_image = Image.new('RGBA', (total_width, max_height), (255, 255, 255, 0))
     x_offset = 0
     for image in resized_images:
-        combined_image.paste(image, (x_offset, 0))
+        # Convert to 'RGBA' if necessary
+        if image.mode != 'RGBA':
+            image = image.convert('RGBA')
+        combined_image.paste(image, (x_offset, 0), image)  # Use image itself as mask for transparency
         x_offset += image.size[0]
+
 
     # Display the combined image in Streamlit
     st.image(combined_image)
+
+def json_to_s3(data_dict: dict, bucket_name: str, object_key: str) -> None:
+    """
+    Uploads a Python dictionary as a JSON file to an S3 bucket.
+
+    Parameters:
+    - data_dict (dict): The dictionary to upload.
+    - bucket_name (str): The name of the S3 bucket.
+    - object_key (str): The key (filename) under which to store the object
+                        in the S3 bucket.
+
+    Returns:
+    - None
+    """
+    # Initialise S3 client with config
+    config = Config(signature_version="s3v4", region_name="eu-west-2")
+    s3 = boto3.client("s3", config=config)
+
+    # Convert the dictionary to a JSON string
+    json_str = json.dumps(data_dict)
+
+    # Upload the JSON string to the specified S3 bucket
+    s3.put_object(Body=json_str, Bucket=bucket_name, Key=object_key)
