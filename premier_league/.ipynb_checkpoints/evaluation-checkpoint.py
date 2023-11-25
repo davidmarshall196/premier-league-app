@@ -19,11 +19,11 @@ def evaluate_model(
     """Evaluate a model on test data.
 
     Args:
-        predictions (list): List of predictions made by the model.
-        actual_values (list): Actual values that the model was attempting to predict.
+    - predictions (list): List of predictions made by the model.
+    - actual_values (list): Actual values that the model was attempting to predict.
 
     Returns:
-        evaluation_metrics (dict): Key-value pairs of metric names and values.
+    - evaluation_metrics (dict): Key-value pairs of metric names and values.
     """
     logger_config.logger.info(
         f'Evaluating {model_type} model'

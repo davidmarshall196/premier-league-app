@@ -29,8 +29,12 @@ except ImportError:
 def get_current_date_time() -> str:
     """
     Returns the current local date and time as a string.
+
+    Parameters:
+    - None
     
-    :return: A string representing the current date and time in the format YYYY-MM-DD HH:MM:SS
+    Returns:
+    - str: A string representing the current date and time in the format YYYY-MM-DD HH:MM:SS
     """
     # Get the current local date and time
     now = datetime.now()
@@ -49,16 +53,17 @@ def grab_data_s3(
     """
     Retrieve data from an S3 bucket and return a DataFrame.
 
-    :param bucket: Name of the S3 bucket.
-    :type bucket: str
-    :param file_path: Path to the file within the S3 bucket.
-    :type file_path: str
-    :param profile_name: AWS profile name (optional).
-    :type profile_name: Optional[str]
-    :return: DataFrame containing the data from the S3 file.
-    :rtype: pd.DataFrame
-    :raises NoCredentialsError: If credentials are missing.
-    :raises PartialCredentialsError: If credentials are incomplete.
+    Parameters:
+    - file_path (str): Path to the file within the S3 bucket.
+    - bucket (str): Name of the S3 bucket. Defaults to the value in constants.S3_BUCKET.
+    - profile_name (Optional[str]): AWS profile name. Defaults to "premier-league-app".
+
+    Returns:
+    - pd.DataFrame: DataFrame containing the data from the S3 file.
+
+    Raises:
+    - NoCredentialsError: If AWS credentials are missing.
+    - PartialCredentialsError: If AWS credentials are incomplete.
     """
     try:
         if constants.LOCAL_MODE:
@@ -103,18 +108,16 @@ def save_data_s3(
     """
     Save a DataFrame to an S3 bucket.
 
-    :param data: DataFrame to save.
-    :type data: pd.DataFrame
-    :param bucket: Name of the S3 bucket.
-    :type bucket: str
-    :param file_path: Path to the file within the S3 bucket.
-    :type file_path: str
-    :param file_format: Format of the file to save ('csv', 'excel', etc.).
-    :type file_format: str
-    :param profile_name: AWS profile name (optional).
-    :type profile_name: Optional[str]
-    :raises NoCredentialsError: If credentials are missing.
-    :raises PartialCredentialsError: If credentials are incomplete.
+    Parameters:
+    - data (pd.DataFrame): DataFrame to save.
+    - file_path (str): Path to the file within the S3 bucket.
+    - bucket (str): Name of the S3 bucket. Defaults to the value in constants.S3_BUCKET.
+    - file_format (str): Format of the file to save ('csv', 'excel', etc.). Defaults to "csv".
+    - profile_name (Optional[str]): AWS profile name. Defaults to "premier-league-app".
+
+    Raises:
+    - NoCredentialsError: If AWS credentials are missing.
+    - PartialCredentialsError: If AWS credentials are incomplete.
     """
     try:
         if profile_name:
@@ -169,10 +172,15 @@ def save_transformer_s3_pickle(
     """
     Save a scikit-learn transformer object to a pickle file on an S3 bucket.
 
-    :param transformer: Transformer object to save.
-    :param bucket: Name of the S3 bucket.
-    :param file_path: Path where the pickle file will be saved within the S3 bucket.
-    :param profile_name: AWS profile name (optional).
+    Parameters:
+    - transformer: The transformer object to save.
+    - file_path (str): Path where the pickle file will be saved within the S3 bucket.
+    - bucket (str): Name of the S3 bucket. Defaults to the value in constants.S3_BUCKET.
+    - profile_name (Optional[str]): AWS profile name. Defaults to "premier-league-app".
+    - is_transformer (Optional[bool]): A flag indicating if the object is a transformer. Defaults to True.
+
+    Notes:
+    - The function saves the transformer object in a pickle format.
     """
     try:
         # The profile name is optional and used for local development
@@ -220,12 +228,26 @@ def save_transformer_s3_pickle(
             "Incomplete credentials. Please check your AWS configuration."
         )
         
-
 def get_latest_model_file(
-    bucket, 
-    prefix, 
-    session
-):
+    bucket: str, 
+    prefix: str, 
+    session: boto3.Session
+) -> str:
+    """
+    Retrieve the filename of the latest model file from an S3 bucket based on a specified prefix.
+
+    Parameters:
+    - bucket (str): The name of the S3 bucket.
+    - prefix (str): The prefix (folder path) where the model files are stored in the S3 bucket.
+    - session (boto3.Session): The boto3 session used to interact with S3.
+
+    Returns:
+    - str: The filename of the latest model file. Returns None if no files are found.
+
+    Notes:
+    - The function assumes that the files are named in a way that includes a date in the format '%Y%m%d'.
+    - It compares these dates to find the latest file.
+    """
     s3_client = session.client('s3')
     response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
 
@@ -248,14 +270,23 @@ def load_transformer_s3_pickle(
     bucket: str = constants.S3_BUCKET,
     profile_name: Optional[str] = "premier-league-app",
     is_transformer: Optional[bool] = True
-):
+) -> object:
     """
     Load the latest scikit-learn transformer object from a pickle file on an S3 bucket.
 
-    :param bucket: Name of the S3 bucket.
-    :param prefix: Prefix of the file path where the pickle files are stored in the S3 bucket.
-    :param profile_name: AWS profile name (optional).
-    :return: The loaded transformer object.
+    Parameters:
+    - prefix (str): Prefix of the file path where the pickle files are stored in the S3 bucket.
+    - bucket (str): Name of the S3 bucket. Defaults to the value in constants.S3_BUCKET.
+    - profile_name (Optional[str]): AWS profile name. Defaults to "premier-league-app".
+    - is_transformer (Optional[bool]): Flag to indicate if the object is a transformer. Defaults to True.
+
+    Returns:
+    - object: The loaded transformer object.
+
+    Notes:
+    - Retrieves the latest file based on the provided prefix.
+    - Assumes the transformer object is stored in a pickle format.
+    - Uses AWS credentials from the provided profile or environment variables.
     """
     try:
         # Session setup
@@ -300,18 +331,29 @@ def load_transformer_s3_pickle(
         raise Exception(f"An unexpected error occurred: {str(e)}")
 
 def load_and_display_image_from_s3(
-    team_name,
+    team_name: str,
     bucket_name: str = constants.S3_BUCKET,
     profile_name: Optional[str] = "premier-league-app",
-):
+) -> Image:
     """
-    Load an image from S3 and display it in Streamlit.
+    Load an image from an S3 bucket and return it.
 
-    :param bucket_name: Name of the S3 bucket
-    :param object_name: Name of the object (file) in S3
-    :param aws_access_key_id: AWS Access Key ID
-    :param aws_secret_access_key: AWS Secret Access Key
-    :param target_size: Desired size of the image as a tuple (width, height)
+    Parameters:
+    - team_name (str): The name of the team, used to construct the object name in S3.
+    - bucket_name (str): Name of the S3 bucket. Defaults to the value in constants.S3_BUCKET.
+    - profile_name (Optional[str]): AWS profile name for local development. Defaults to "premier-league-app".
+
+    Returns:
+    - Image: An image object.
+
+    Notes:
+    - The function loads an image based on the team name from the specified S3 bucket.
+    - AWS credentials are taken from the specified profile or environment variables.
+    - The image is returned as a PIL Image object.
+
+    Raises:
+    - NoCredentialsError: If AWS credentials are missing.
+    - PartialCredentialsError: If AWS credentials are incomplete.
     """
     try:
         # The profile name is optional and used for local development
@@ -324,7 +366,6 @@ def load_and_display_image_from_s3(
                 aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
                 region_name="eu-west-2"  # or your AWS region
             )
-        
         s3_client = session.client("s3")
         # Get the image object from S3
         object_name = team_name.replace("'","").replace(' ','_')
@@ -350,15 +391,21 @@ def load_and_display_image_from_s3(
         )
     
 def display_side_by_side_images(
-    fixture,
+    fixture: str,
     bucket_name: str = constants.S3_BUCKET,
     scale_factor: float = constants.BADGE_SCALE_FACTOR
-):
+) -> None:
     """
-    Display two images side by side in Streamlit.
+    Display two images side by side for a given fixture.
 
-    :param bucket_name: Name of the S3 bucket
-    :param image_names: List of two image names in S3
+    Parameters:
+    - fixture (str): The fixture for which the team badges will be displayed.
+    - bucket_name (str): Name of the S3 bucket. Defaults to the value in constants.S3_BUCKET.
+    - scale_factor (float): A factor to scale the images. Defaults to constants.BADGE_SCALE_FACTOR.
+
+    Notes:
+    - The function assumes that team badges are stored in an S3 bucket with a specific naming pattern.
+    - It loads and resizes the badges of the two teams involved in the fixture and displays them side by side.
     """
     image_1 = fixture.split(' v ')[0].replace(' ','_') + '.png'
     image_2 = fixture.split(' v ')[1].replace(' ','_') + '.png'
@@ -387,8 +434,7 @@ def display_side_by_side_images(
             image = image.convert('RGBA')
         combined_image.paste(image, (x_offset, 0), image)  # Use image itself as mask for transparency
         x_offset += image.size[0]
-
-
+        
     # Display the combined image in Streamlit
     st.image(combined_image)
 
@@ -401,7 +447,6 @@ def json_to_s3(data_dict: dict, bucket_name: str, object_key: str) -> None:
     - bucket_name (str): The name of the S3 bucket.
     - object_key (str): The key (filename) under which to store the object
                         in the S3 bucket.
-
     Returns:
     - None
     """

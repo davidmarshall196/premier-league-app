@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import mlflow
 from mlflow.tracking import MlflowClient
 from mlflow.entities import Run
@@ -13,14 +13,33 @@ except ModuleNotFoundError:
     import constants
 
 
-def open_mlflow_tracking(experiment_name=constants.EXP_NAME):
+def open_mlflow_tracking(
+    experiment_name: Optional[str] = constants.EXP_NAME
+) -> None:
+    """
+    Set up MLflow tracking with the specified experiment name using a 
+    PostgreSQL database for backend storage.
+
+    Parameters:
+    - experiment_name (Optional[str]): The name of the MLflow experiment. 
+        Defaults to the value in constants.EXP_NAME.
+
+    Notes:
+    - Configures the MLflow tracking URI to point to a PostgreSQL 
+        database specified in the config module.
+    - Sets the experiment name in the MLflow tracking context.
+    - Assumes the necessary database credentials and endpoint are 
+        provided in the config module.
+    """
     db_uri = f"postgresql+psycopg2://postgres:{config.RDS_DB_PASSWORD}@{config.RDS_ENDPOINT}:5432/{config.RDS_DB_ID}" 
 
     mlflow.set_tracking_uri(db_uri)    
     mlflow.set_experiment(experiment_name)
 
 
-def get_all_experiments(client: MlflowClient) -> List[dict]:
+def get_all_experiments(
+    client: MlflowClient
+) -> List[dict]:
     """
     Retrieve all experiments from the MLflow tracking server.
 
@@ -28,12 +47,15 @@ def get_all_experiments(client: MlflowClient) -> List[dict]:
     - client (MlflowClient): An instance of the MLflowClient.
 
     Returns:
-    List[dict]: A list of experiments, each represented as a dictionary.
+    - List[dict]: A list of experiments, each represented as a dictionary.
     """
     experiments = client.search_experiments()
     return [{"name": exp.name, "experiment_id": exp.experiment_id} for exp in experiments]
 
-def get_runs_from_experiment(client: MlflowClient, experiment_id: str) -> List[Run]:
+def get_runs_from_experiment(
+    client: MlflowClient, 
+    experiment_id: str
+) -> List[Run]:
     """
     Get all runs from a specified experiment.
 
@@ -42,7 +64,7 @@ def get_runs_from_experiment(client: MlflowClient, experiment_id: str) -> List[R
     - experiment_id (str): The experiment ID from which to retrieve runs.
 
     Returns:
-    List[Run]: A list of Run objects containing run details.
+    - List[Run]: A list of Run objects containing run details.
     """
     return client.search_runs([experiment_id])
 
@@ -55,7 +77,7 @@ def print_run_details(run: Run) -> None:
     - run (Run): An MLflow Run object.
 
     Returns:
-    None
+    - None
     """
     print(f"Run ID: {run.info.run_id}")
     print("Parameters:")
@@ -70,7 +92,9 @@ def print_run_details(run: Run) -> None:
     print("-" * 30)
 
 
-def runs_to_dataframe(runs: List[Run]) -> pd.DataFrame:
+def runs_to_dataframe(
+    runs: List[Run]
+) -> pd.DataFrame:
     """
     Convert a list of MLflow runs into a pandas DataFrame.
 
@@ -78,7 +102,7 @@ def runs_to_dataframe(runs: List[Run]) -> pd.DataFrame:
     - runs (List[Run]): A list of MLflow Run objects.
 
     Returns:
-    pd.DataFrame: A pandas DataFrame where each row represents a run and columns
+    - pd.DataFrame: A pandas DataFrame where each row represents a run and columns
     represent run details such as parameters, metrics, and tags.
     """
     runs_data = []
@@ -97,7 +121,10 @@ def runs_to_dataframe(runs: List[Run]) -> pd.DataFrame:
     # Create a DataFrame from the combined run information
     return pd.DataFrame(runs_data)
 
-def get_runs_from_experiment(client: MlflowClient, experiment_id: str) -> List[Run]:
+def get_runs_from_experiment(
+    client: MlflowClient, 
+    experiment_id: str
+) -> List[Run]:
     """
     Get all runs from a specified experiment.
 

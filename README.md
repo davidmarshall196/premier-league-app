@@ -36,6 +36,5 @@ The app uses [Catboost](https://catboost.ai/) for the underlying predictions. Th
 - Deployment
 - Flake8 + Black
 - More unit tests
-- Fix Functions (docs, types)
 - Git hooks
 - Docs

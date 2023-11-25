@@ -25,10 +25,20 @@ def generate_email_body(
     alert_date: str = constants.current_time
 ) -> str:
     """
-    Generate the HTML body for the email.
+    Generate the HTML body for an email notification based on the alert type.
+
+    Parameters:
+    - alert_type (str): The type of alert, either 'data_drift' or 'data_validation'.
+    - bucket_name (str): The name of the S3 bucket.
+    - s3_object_name (str): The key of the object within the S3 bucket.
+    - url (str): The URL link to the report.
+    - alert_date (str): The date of the alert. Defaults to the current time.
 
     Returns:
-    str: The HTML body for the email.
+    - str: The HTML body for the email.
+
+    Raises:
+    - ValueError: If alert_type is not 'data_drift' or 'data_validation'.
     """
     if alert_type not in ("data_drift", "data_validation"):
         raise ValueError("alert_type must me data_drift or data_validation")
@@ -52,11 +62,16 @@ def get_s3_client(
     region: str = "eu-west-2"
 ) -> boto3.Session.client:
     """
-    Get an S3 client using the specified profile name or environment variables.
+    Retrieve an S3 client instance using a specified AWS 
+    profile name or environment variables.
 
-    :param profile_name: Optional AWS profile name.
-    :param region: AWS region.
-    :return: S3 client object.
+    Parameters:
+    - profile_name (Optional[str]): The AWS profile name. 
+            Defaults to 'premier-league-app'.
+    - region (str): The AWS region.
+
+    Returns:
+    - boto3.Session.client: An S3 client object.
     """
     if profile_name:
         session = boto3.Session(profile_name=profile_name)
@@ -108,11 +123,23 @@ def send_sns_notification(
     Topic: str, 
     profile_name: Optional[str] = 'premier-league-app',
     region: str = "eu-west-2"
-):
+) -> Dict[str, Any]:
     """
-    Send a message on a specified SNS topic.
+    Send a message to a specified AWS SNS topic.
 
-    Args - Subject:str, Message:str, Topic:str, profile_name: Optional[str], region: str, Print:bool=False
+    Parameters:
+    - Subject (str): The subject of the message.
+    - Message (str): The body of the message.
+    - Topic (str): The ARN of the SNS topic.
+    - profile_name (Optional[str]): The AWS profile name. Defaults to 'premier-league-app'.
+    - region (str): The AWS region.
+
+    Returns:
+    - Dict[str, Any]: The response from the SNS publish action.
+
+    Raises:
+    - NoCredentialsError: If AWS credentials are not available or incorrect.
+    - PartialCredentialsError: If AWS credentials are incomplete.
     """
     try:
         session = boto3.Session(

@@ -11,9 +11,6 @@ from sklearn.metrics import make_scorer, f1_score
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from category_encoders import TargetEncoder
-pd.set_option('display.max_rows', 500)
-pd.set_option('display.max_columns', 500)
-pd.set_option('display.width', 1000)
 
 
 def get_goals_scored(
@@ -23,14 +20,13 @@ def get_goals_scored(
     Calculates the number of goals scored by each team over the 
     entire dataset.
     
-    Args:
-    playing_stat (DataFrame): Pandas dataframe containing the match statistics
+    Parameters:
+    - playing_stat (DataFrame): Pandas dataframe containing the match statistics
 
     Returns:
-    big_df (DataFrame): Pandas dataframe with team names as rows and columns 
+    - big_df (DataFrame): Pandas dataframe with team names as rows and columns 
     as the number of goals scored by the team
     """
-
     # Create a dictionary with team names as keys
     teams = {team: [] for team in playing_stat['HomeTeam'].unique()}
     
@@ -61,14 +57,13 @@ def get_goals_conceded(
     Calculates the number of goals conceded by each team over the entire 
     dataset.
     
-    Args:
-    playing_stat (DataFrame): Pandas dataframe containing the match statistics
+    Parameters:
+    - playing_stat (DataFrame): Pandas dataframe containing the match statistics
 
     Returns:
-    big_df (DataFrame): Pandas dataframe with team names as rows and columns
+    - big_df (DataFrame): Pandas dataframe with team names as rows and columns
     as the number of goals conceded by the team
     """
-
     teams = {team: [] for team in playing_stat['HomeTeam'].unique()}
     
     for i in range(len(playing_stat)):
@@ -96,16 +91,14 @@ def get_gss(
     Calculates the number of goals scored and conceded by each team in each 
     match.
     
-    Args:
-    playing_stat (DataFrame): Pandas dataframe containing the match statistics
+    Parameters:
+    - playing_stat (DataFrame): Pandas dataframe containing the match statistics
 
     Returns:
-    playing_stat (DataFrame): Pandas dataframe with columns for the number 
+    - playing_stat (DataFrame): Pandas dataframe with columns for the number 
     of goals scored and conceded by the home team (HTGS, HTGC) and away team
     (ATGS, ATGC)
     """
-
-    
     GC = get_goals_conceded(playing_stat)
     GS = get_goals_scored(playing_stat)
    
@@ -140,12 +133,12 @@ def get_points(
     """
     Calculates the number of points earned by a team in a single match.
 
-    Args:
-    result (str): String representing the match result, where 'W' 
+    Parameters:
+    - result (str): String representing the match result, where 'W' 
     indicates a win, 'D' indicates a draw and 'L' indicates a loss.
 
     Returns:
-    points (int): Integer representing the number of points earned by the team
+    - points (int): Integer representing the number of points earned by the team
     """
     if result == 'W':
         return 3
@@ -164,13 +157,13 @@ def get_cuml_points(
     Calculates the cumulative number of points earned by each team 
     up to a given match.
 
-    Args:
-    matchres (DataFrame): Pandas dataframe containing the match results
-    games_1 (int): Integer representing the number of games played
+    Parameters:
+    - matchres (DataFrame): Pandas dataframe containing the match results
+    - games_1 (int): Integer representing the number of games played
     per team plus one.
 
     Returns:
-    matchres_points (DataFrame): Pandas dataframe with columns representing
+    - matchres_points (DataFrame): Pandas dataframe with columns representing
     each match and rows representing each team, with the value of each cell
     representing the number of points earned by the team up to that match.
     """
@@ -191,15 +184,15 @@ def get_matchres(
     """
     Calculates the match results for each team over the entire dataset.
 
-    Args:
-    playing_stat (DataFrame): Pandas dataframe containing the match statistics
-    games_1 (int): Integer representing the number of games played per 
+    Parameters:
+    - playing_stat (DataFrame): Pandas dataframe containing the match statistics
+    - games_1 (int): Integer representing the number of games played per 
     team plus one
-    total_games (int): Integer representing the total number of games in the
+    - total_games (int): Integer representing the total number of games in the
     dataset
 
     Returns:
-    big_df (DataFrame): Pandas dataframe with team names as rows and columns
+    - big_df (DataFrame): Pandas dataframe with team names as rows and columns
     as the match results ('W', 'D' or 'L') for each match.
     """
     teams = {team: [] for team in playing_stat['HomeTeam'].unique()}
@@ -235,18 +228,18 @@ def get_agg_points(
     Calculates the cumulative number of points earned by each team up to a
     given match.
     
-    Args:
-    playing_stat (DataFrame): Pandas dataframe containing the match 
+    Parameters:
+    - playing_stat (DataFrame): Pandas dataframe containing the match 
     statistics.
+    - r: Number of games in a season.
     
     Returns:
-    playing_stat (DataFrame): Pandas dataframe with additional columns 
+    - playing_stat (DataFrame): Pandas dataframe with additional columns 
     representing the cumulative number of points earned by the home team 
     (HTP) and away team (ATP) up to each match.
     """
     games_1 = int((playing_stat.shape[0] / 10) + 1 )
     total_games = len(playing_stat)
-    
     matchres = get_matchres(playing_stat, games_1, total_games)
     cum_pts = get_cuml_points(matchres, games_1, r = r)
     HTP = []
@@ -260,27 +253,26 @@ def get_agg_points(
 
         if ((i + 1)% 10) == 0:
             j = j + 1
-            
     playing_stat['HTP'] = HTP
     playing_stat['ATP'] = ATP
     return playing_stat 
 
 
 def get_form(
-        playing_stat: pd.DataFrame,
-        num: int
-    ) -> pd.DataFrame:
+    playing_stat: pd.DataFrame,
+    num: int
+) -> pd.DataFrame:
     """
     Calculates the current form of each team based on their match results up 
     to a given match.
 
-    Args:
-    playing_stat (DataFrame): Pandas dataframe containing the match statistics
-    num (int): Integer representing the number of previous matches to consider
+    Parameters:
+    - playing_stat (DataFrame): Pandas dataframe containing the match statistics
+    - num (int): Integer representing the number of previous matches to consider
     when calculating form
     
     Returns:
-    form_final (DataFrame): Pandas dataframe with columns representing each 
+    - form_final (DataFrame): Pandas dataframe with columns representing each 
     match and rows representing each team, with the value of each cell 
     representing the form of the team up to that match.
     """
@@ -305,13 +297,13 @@ def add_form(
     Adds columns to the playing statistics dataframe representing the current
     form of each team up to a given match.
     
-    Args:
-    playing_stat (DataFrame): Pandas dataframe containing the match statistics
-    num (int): Integer representing the number of previous matches to consider
+    Parameters:
+    - playing_stat (DataFrame): Pandas dataframe containing the match statistics
+    - num (int): Integer representing the number of previous matches to consider
     when calculating form
     
     Returns:
-    playing_stat (DataFrame): Pandas dataframe with additional columns 
+    - playing_stat (DataFrame): Pandas dataframe with additional columns 
     representing the current form of each team up to each match.
     """
     form = get_form(playing_stat,num)
@@ -344,12 +336,12 @@ def add_form_df(
     Adds columns to the playing statistics dataframe representing the 
     current form of each team up to a given number of previous matches.
     
-    Args:
-    playing_statistics (DataFrame): Pandas dataframe containing the match
+    Parameters:
+    - playing_statistics (DataFrame): Pandas dataframe containing the match
     statistics
     
     Returns:
-    playing_statistics (DataFrame): Pandas dataframe with additional columns
+    - playing_statistics (DataFrame): Pandas dataframe with additional columns
     representing the current form of each team up to each of 5 previous 
     matches.
     """
@@ -361,18 +353,18 @@ def add_form_df(
     return playing_statistics    
 
 def get_mw(
-        playing_stat: pd.DataFrame
-    ) -> pd.DataFrame:
+    playing_stat: pd.DataFrame
+) -> pd.DataFrame:
     """
     Adds a column to the playing statistics dataframe representing the match
     week number for each match.
     
-    Args:
-    playing_stat (DataFrame): Pandas dataframe containing the match 
+    Parameters:
+    - playing_stat (DataFrame): Pandas dataframe containing the match 
     statistics
     
     Returns:
-    playing_stat (DataFrame): Pandas dataframe with an additional column 
+    - playing_stat (DataFrame): Pandas dataframe with an additional column 
     representing the match week number for each match.
     """
     j = 1
@@ -391,12 +383,12 @@ def gss_all_seasons(
     Calculates the number of goals scored and conceded by each team in each
     match for all seasons.
     
-    Args:
-    playing_df (DataFrame): Pandas dataframe containing the match statistics 
+    Parameters:
+    - playing_df (DataFrame): Pandas dataframe containing the match statistics 
     for all seasons.
     
     Returns:
-    gs_df_full (DataFrame): Pandas dataframe with columns for the number of
+    - gs_df_full (DataFrame): Pandas dataframe with columns for the number of
     goals scored and conceded by the home team (HTGS, HTGC) and away team 
     (ATGS, ATGC) for each match, for all seasons.
     """
@@ -413,12 +405,12 @@ def points_all_seasons(
     Calculates the cumulative number of points earned by each team up to a
     given match for all seasons.
     
-    Args:
-    playing_df (DataFrame): Pandas dataframe containing the match statistics 
+    Parameters:
+    - playing_df (DataFrame): Pandas dataframe containing the match statistics 
     for all seasons.
     
     Returns:
-    points_df_full (DataFrame): Pandas dataframe with columns representing 
+    - points_df_full (DataFrame): Pandas dataframe with columns representing 
     each match and rows representing each team, with the value of each cell
     representing the number of points earned by the team up to that match, 
     for all seasons.
@@ -436,12 +428,12 @@ def form_all_seasons(
     Returns a dataframe with the form for each team over the previous 5 games
     for all seasons in the input dataframe.
 
-    Args:
-        playing_df (pd.DataFrame): A pandas dataframe containing all of the
+    Parameters:
+    - playing_df (pd.DataFrame): A pandas dataframe containing all of the
         Premier League data.
 
     Returns:
-        pd.DataFrame: A pandas dataframe containing the form for each team 
+    - pd.DataFrame: A pandas dataframe containing the form for each team 
         over the previous 5 games for all seasons in the input dataframe.
     """
     form_df_full = pd.DataFrame()
@@ -457,12 +449,12 @@ def mw_all_season(
     Returns a dataframe with the match week for each game in each season in
     the input dataframe.
 
-    Args:
-        playing_df (pd.DataFrame): A pandas dataframe containing all of the
+    Parameters:
+    - playing_df (pd.DataFrame): A pandas dataframe containing all of the
         Premier League data.
 
     Returns:
-        pd.DataFrame: A pandas dataframe containing the match week for each 
+    - pd.DataFrame: A pandas dataframe containing the match week for each 
         game in each season in the input dataframe.
     """
     match_week_full = pd.DataFrame()
@@ -473,27 +465,27 @@ def mw_all_season(
 
 
 def merge_data(
-        gs_df_full: pd.DataFrame, 
-        points_df_full: pd.DataFrame, 
-        form_df_full: pd.DataFrame,
-        match_week_full: pd.DataFrame
-    ) -> pd.DataFrame:
+    gs_df_full: pd.DataFrame, 
+    points_df_full: pd.DataFrame, 
+    form_df_full: pd.DataFrame,
+    match_week_full: pd.DataFrame
+) -> pd.DataFrame:
     """
     Merges four dataframes (goals scored, points, form, and match week) 
     into a single dataframe.
 
-    Args:
-        gs_df_full (pd.DataFrame): A pandas dataframe containing the goals
+    Parameters:
+    - gs_df_full (pd.DataFrame): A pandas dataframe containing the goals
         scored for each team in each game.
-        points_df_full (pd.DataFrame): A pandas dataframe containing the 
+    - points_df_full (pd.DataFrame): A pandas dataframe containing the 
         cumulative points for each team over the season.
-        form_df_full (pd.DataFrame): A pandas dataframe containing the form
+    - form_df_full (pd.DataFrame): A pandas dataframe containing the form
         for each team over the previous 5 games.
-        match_week_full (pd.DataFrame): A pandas dataframe containing the
+    - match_week_full (pd.DataFrame): A pandas dataframe containing the
         match week for each game.
 
     Returns:
-        pd.DataFrame: A pandas dataframe with merged data.
+    - pd.DataFrame: A pandas dataframe with merged data.
     """
     keys = ['season', 'Date', 'HomeTeam', 'AwayTeam','FTHG', 'FTAG', 'FTR'] 
     playing_df = pd.merge(gs_df_full, points_df_full, on=keys )
@@ -510,12 +502,12 @@ def get_form_points(
     games, returns the total number of points
     earned by the team in those games.
 
-    Args:
-        string (str): A string of letters representing the results of the 
+    Parameters:
+    - string (str): A string of letters representing the results of the 
         previous 5 games.
 
     Returns:
-        int: The total number of points earned by the team in the previous 
+    - int: The total number of points earned by the team in the previous 
         5 games.
     """
     sum = 0
@@ -531,12 +523,12 @@ def add_form_cols(
     points earned by each team over the previous 5 games and a string 
     representation of the results of the previous 5 games.
 
-    Args:
-        playing_stat (pd.DataFrame): A pandas dataframe containing the
+    Parameters:
+    - playing_stat (pd.DataFrame): A pandas dataframe containing the
         Premier League data.
 
     Returns:
-        pd.DataFrame: A pandas dataframe with additional columns for the 
+    - pd.DataFrame: A pandas dataframe with additional columns for the 
         form of each team.
     """
     playing_stat['HTFormPtsStr'] = playing_stat['HM1'] + playing_stat[
@@ -558,10 +550,10 @@ def get_3game_ws(
     Returns 1 if a team has won their last three games, 0 otherwise.
     
     Parameters:
-    string (str): A string containing the results of a team's previous games.
+    - string (str): A string containing the results of a team's previous games.
     
     Returns:
-    int: 1 if the team has won their last three games, 0 otherwise.
+    - int: 1 if the team has won their last three games, 0 otherwise.
     """
     if string[-3:] == 'WWW':
         return 1
@@ -575,10 +567,10 @@ def get_5game_ws(
     Returns 1 if a team has won their last five games, 0 otherwise.
     
     Parameters:
-    string (str): A string containing the results of a team's previous games.
+    - string (str): A string containing the results of a team's previous games.
     
     Returns:
-    int: 1 if the team has won their last five games, 0 otherwise.
+    - int: 1 if the team has won their last five games, 0 otherwise.
     """
     if string == 'WWWWW':
         return 1
@@ -592,10 +584,10 @@ def get_3game_ls(
     Returns 1 if a team has lost their last three games, 0 otherwise.
     
     Parameters:
-    string (str): A string containing the results of a team's previous games.
+    - string (str): A string containing the results of a team's previous games.
     
     Returns:
-    int: 1 if the team has lost their last three games, 0 otherwise.
+    - int: 1 if the team has lost their last three games, 0 otherwise.
     """
     if string[-3:] == 'LLL':
         return 1
@@ -609,10 +601,10 @@ def get_5game_ls(
     Returns 1 if a team has lost their last five games, 0 otherwise.
     
     Parameters:
-    string (str): A string containing the results of a team's previous games.
+    - string (str): A string containing the results of a team's previous games.
     
     Returns:
-    int: 1 if the team has lost their last five games, 0 otherwise.
+    - int: 1 if the team has lost their last five games, 0 otherwise.
     """
     if string == 'LLLLL':
         return 1
@@ -626,10 +618,10 @@ def add_win_streaks(
     Adds columns to `playing_stat` indicating whether each team has won or lost three or five games in a row.
     
     Parameters:
-    playing_stat (pandas.DataFrame): A DataFrame containing the playing statistics for each team.
+    - playing_stat (pandas.DataFrame): A DataFrame containing the playing statistics for each team.
     
     Returns:
-    pandas.DataFrame: A copy of `playing_stat` with new columns indicating win/loss streaks for each team.
+    - pandas.DataFrame: A copy of `playing_stat` with new columns indicating win/loss streaks for each team.
     """
     playing_stat['HTWinStreak3'] = playing_stat[
         'HTFormPtsStr'].apply(get_3game_ws)
@@ -656,11 +648,11 @@ def add_goal_difference(
     """
     Calculates and adds the goal difference columns to the playing_stat DataFrame.
 
-    Args:
-        playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
+    Parameters:
+    - playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
 
     Returns:
-        pd.DataFrame: The playing_stat DataFrame with added 'HTGD' and 'ATGD' columns.
+    - pd.DataFrame: The playing_stat DataFrame with added 'HTGD' and 'ATGD' columns.
     """
     playing_stat['HTGD'] = playing_stat['HTGS'] - playing_stat['HTGC']
     playing_stat['ATGD'] = playing_stat['ATGS'] - playing_stat['ATGC']
@@ -673,11 +665,11 @@ def add_points_diff(
     """
     Calculates and adds the points difference columns to the playing_stat DataFrame.
 
-    Args:
-        playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
+    Parameters:
+    - playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
 
     Returns:
-        pd.DataFrame: The playing_stat DataFrame with added 'DiffPts' and 'DiffFormPts' columns.
+    - pd.DataFrame: The playing_stat DataFrame with added 'DiffPts' and 'DiffFormPts' columns.
     """
     playing_stat['DiffPts'] = playing_stat['HTP'] - playing_stat['ATP']
     playing_stat['DiffFormPts'] = playing_stat['HTFormPts'] - playing_stat['ATFormPts']
@@ -692,13 +684,13 @@ def league_position(
     """
     Computes the league position for each team in a given season and matchweek.
 
-    Args:
-        playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
-        season (int): The season for which the league position is calculated.
-        mw (int): The matchweek for which the league position is calculated.
+    Parameters:
+    - playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
+    - season (int): The season for which the league position is calculated.
+    - mw (int): The matchweek for which the league position is calculated.
 
     Returns:
-        pd.DataFrame: The league position DataFrame with columns 'season', 'MW', 'Team',
+    - pd.DataFrame: The league position DataFrame with columns 'season', 'MW', 'Team',
                       'LOC' (Home or Away), and 'LeaguePosition'.
     """
     league_pos = playing_stat[(playing_stat['season'] == season) & (playing_stat['MW'] == mw)]
@@ -752,11 +744,11 @@ def league_pos_all_seasons(
     """
     Computes the league position for all seasons and matchweeks in the playing_stat DataFrame.
 
-    Args:
-        playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
+    Parameters:
+    - playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
 
     Returns:
-        pd.DataFrame: The final league position DataFrame with columns 'season', 'MW', 'Team',
+    - pd.DataFrame: The final league position DataFrame with columns 'season', 'MW', 'Team',
                       'LOC' (Home or Away), 'HomeLeaguePosition', 'AwayLeaguePosition',
                       and 'LeaguePositionDiff'.
     """
@@ -780,11 +772,11 @@ def scale_points_mw(
     """
     Scales the points-based columns in the playing_stat DataFrame by matchweek.
 
-    Args:
-        playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
+    Parameters:
+    - playing_stat (pd.DataFrame): The DataFrame containing playing statistics.
 
     Returns:
-        pd.DataFrame: The playing_stat DataFrame with scaled columns 'HTGD', 'ATGD',
+    - pd.DataFrame: The playing_stat DataFrame with scaled columns 'HTGD', 'ATGD',
                       'DiffPts', 'DiffFormPts', 'HTP', and 'ATP'.
     """
     cols = ['HTGD', 'ATGD', 'DiffPts', 'DiffFormPts', 'HTP', 'ATP']
@@ -802,14 +794,14 @@ def convert_to_date(
     """
     Converts a date string to a pandas datetime object.
 
-    Args:
-        date (str): The date string to convert.
+    Parameters:
+    - date (str): The date string to convert.
 
     Returns:
-        pd.Timestamp: The pandas datetime object representing the converted date.
+    - pd.Timestamp: The pandas datetime object representing the converted date.
 
     Raises:
-        ValueError: If the date format is not recognized.
+    - ValueError: If the date format is not recognized.
     """
     try:
         if len(date) < 10:
@@ -828,12 +820,12 @@ def add_date_features(
     Calculates the goal difference for each team in the given playing_stat
     DataFrame.
     
-    Args:
-    playing_stat (DataFrame): A pandas DataFrame with columns for the home 
+    Parameters:
+    - playing_stat (DataFrame): A pandas DataFrame with columns for the home 
     and away team goals scored and conceded.
     
     Returns:
-    DataFrame: A new pandas DataFrame with additional columns for the home 
+    - DataFrame: A new pandas DataFrame with additional columns for the home 
     and away team goal difference.
     """
     playing_stat['pd_date'] =  playing_stat[
@@ -853,12 +845,12 @@ def convert_to_string(
     Calculates the difference in points and form points between the home 
     and away team for each game in the given playing_stat DataFrame.
     
-    Args:
-    playing_stat (DataFrame): A pandas DataFrame with columns for the home
+    Parameters:
+    - playing_stat (DataFrame): A pandas DataFrame with columns for the home
     and away team points and form points.
     
     Returns:
-    DataFrame: A new pandas DataFrame with additional columns for the 
+    - DataFrame: A new pandas DataFrame with additional columns for the 
     difference in points and form points.
     """
     playing_stat['HM1'] = playing_stat['HM1'].astype('str')
@@ -875,12 +867,12 @@ def drop_cols(
     """
     Drops unneeded columns from the DataFrame.
     
-    Args:
-    playing_stat (DataFrame): A pandas DataFrame containing premier league
+    Parameters:
+    - playing_stat (DataFrame): A pandas DataFrame containing premier league
     data.
     
     Returns:
-    DataFrame: A new pandas DataFrame with additional columns for the 
+    - DataFrame: A new pandas DataFrame with additional columns for the 
     difference in points and form points.
     """
     drop_cols = ['Date', 'FTHG', 'FTAG', 'HTFormPtsStr', 
@@ -893,12 +885,6 @@ def drop_cols(
     return playing_stat
 
 
-#data = pd.read_csv('../data/transformed_data_cc.csv')
-#data.head()
-#target='FTHG'
-#playing_stat=data.copy()
-#
-
 
 def convert_categorical(
         playing_stat: pd.DataFrame, 
@@ -908,13 +894,13 @@ def convert_categorical(
     Converts categorical variables in the dataset to numerical 
     values using the TargetEncoder. 
     
-    Args:
-    playing_stat: Pandas DataFrame. The dataset containing the 
-    categorical variables to be encoded. 
-    target: String. The name of the target variable in the dataset.
+    Parameters:
+    - playing_stat: Pandas DataFrame. The dataset containing the 
+        categorical variables to be encoded. 
+    - target: String. The name of the target variable in the dataset.
     
     Returns:
-    Pandas DataFrame. If the target variable is FTHG or FTAG, the 
+    - Pandas DataFrame. If the target variable is FTHG or FTAG, the 
     function returns a numeric dataset after encoding the categorical
     features. Otherwise, it returns the original dataset with 
     categorical variables encoded.
@@ -932,11 +918,8 @@ def convert_categorical(
                         smoothing=10)
         enc = enc.fit_transform(X=playing_stat.drop(target, axis=1), 
                   y=playing_stat[target])
-    
         numeric_dataset = enc.transform(X)
-        
         return numeric_dataset
-    
     else: 
         return playing_stat
     
@@ -948,11 +931,12 @@ def only_hw(
     of the game. A value of 0 is returned for a home win, 1 for a draw, 
     and 2 for an away win.
 
-    Args:
-    string: String. The outcome of a game (H for home win, D for draw,
+    Parameters:
+    - string: String. The outcome of a game (H for home win, D for draw,
     A for away win).
+    
     Returns:
-    Integer. 0 for a home win, 1 for a draw, and 2 for an away win.
+    - Integer. 0 for a home win, 1 for a draw, and 2 for an away win.
     """
     if string == 'H':
         return 0
@@ -967,22 +951,15 @@ def add_target(
     """
     Adds the target to the dataframe.
 
-    Args:
-    playing_stat: Pandas DataFrame. The dataset containing the raw 
+    Parameters:
+    - playing_stat: Pandas DataFrame. The dataset containing the raw 
     game data.
+    
     Returns:
-    Pandas DataFrame. The final dataset after adding the target
+    - Pandas DataFrame. The final dataset after adding the target
     """
     playing_stat['FTR'] = playing_stat['FTR'].apply(only_hw)
     return playing_stat
-
-#columns_req = ['season', 'Date','HomeTeam','AwayTeam','FTHG','FTAG','FTR']
-#
-#df = pd.read_csv('../data/initial_data.csv')
-#df.head()
-#
-#playing_df = df[columns_req]
-#
 
 def run_pipeline(
         playing_df: pd.DataFrame
@@ -990,11 +967,12 @@ def run_pipeline(
     """
     Runs the pipeline for generating the final dataset. 
 
-    Args:
-    playing_df: Pandas DataFrame. The dataset containing the raw 
+    Parameters:
+    - playing_df: Pandas DataFrame. The dataset containing the raw 
     game data.
+    
     Returns:
-    Pandas DataFrame. The final dataset after running the entire 
+    - Pandas DataFrame. The final dataset after running the entire 
     pipeline.
     """
     gs_df_full = gss_all_seasons(playing_df)
@@ -1029,11 +1007,11 @@ def add_season(
     the date column and determining the start and end years of the 
     season based on the month of the game.
 
-    Args:
-    data: Pandas DataFrame. The dataset containing the date column.
+    Parameters:
+    - data: Pandas DataFrame. The dataset containing the date column.
     
     Returns:
-    Pandas DataFrame. The original dataset with the season column 
+    - Pandas DataFrame. The original dataset with the season column 
     added.
     """
     data['pd_date'] = pd.to_datetime(data['Date'], format='%d/%m/%Y')

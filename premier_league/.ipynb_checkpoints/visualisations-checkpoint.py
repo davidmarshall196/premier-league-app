@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
@@ -6,7 +5,7 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 from datetime import datetime
 import numpy as np
-from typing import Any
+from typing import Any, Tuple, List
 from colorama import init, Fore, Style
 from tabulate import tabulate
 from pandas import DataFrame
@@ -26,7 +25,24 @@ except:
     import inference_pipeline
     import constants
 
-def get_shap_values(data, classifier):
+def get_shap_values(
+    data: pd.DataFrame, 
+    classifier
+) -> Tuple[np.ndarray, List[str]]:
+    """
+    Compute SHAP values for the given data using the specified classifier.
+
+    Parameters:
+    - data (pd.DataFrame): The input data for which SHAP values are to be computed.
+    - classifier: The trained classification model.
+
+    Returns:
+    - Tuple[np.ndarray, List[str]]: A tuple containing the SHAP values and the feature names.
+
+    Notes:
+    - Uses the SHAP library to explain the output of the model.
+    - The SHAP values provide insight into the contribution of each feature to the model's predictions.
+    """
     explainer = shap.Explainer(classifier)
     shap_values = explainer.shap_values(
          data[classifier.feature_names_]
@@ -38,17 +54,12 @@ def shap_summary():
     """
     This function creates a SHAP summary plot for the given data and classifier.
     
-    Args:
-        data_path (str): The path to the data that has been transformed and is ready for prediction.
-        model_path (str): The path to the trained classifier for which the SHAP values are being calculated.
+    Parameters:
+    - None
     
     Returns:
-        matplotlib.figure.Figure
+    - matplotlib.figure.Figure
     """
-    # Load data, classifier
-    
-    
-    # Load your data and model here
     # Grab data
     transformed_data = pd.read_csv(
         '../data/transformed_data_predictions.csv'
@@ -71,7 +82,21 @@ def shap_summary():
     plt.xlabel('Shap Impact')
     return fig_m
 
-def actuals_predicted(x_test, ha='Home'):
+def actuals_predicted(
+    x_test: pd.DataFrame, 
+    ha: str = 'Home'
+) -> None:
+    """
+    Plot actual vs predicted values for Home or Away goals.
+
+    Parameters:
+    - x_test (pd.DataFrame): The test dataset containing actual and predicted values.
+    - ha (str): Specifies 'Home' or 'Away'. Defaults to 'Home'.
+
+    Notes:
+    - Plots a scatterplot and regression line to compare actual and predicted goals.
+    - Adds a slight noise to the data for better visualization.
+    """
     plot_data = x_test.copy()
     plot_data[ha] = plot_data[f'{ha} Prediction'].astype(str)
     plot_data[f'{ha} Prediction Noise'] = plot_data[
@@ -94,7 +119,21 @@ def actuals_predicted(x_test, ha='Home'):
     plt.ylabel('Actual Goals')
     plt.show()
 
-def histoplot(x_test, ha = 'Home'):
+def histoplot(
+    x_test: pd.DataFrame, 
+    ha: str = 'Home'
+) -> None:
+    """
+    Create a histogram plot for the difference between actual and predicted goals.
+
+    Parameters:
+    - x_test (pd.DataFrame): The test dataset containing actual and predicted values.
+    - ha (str): Specifies 'Home' or 'Away'. Defaults to 'Home'.
+
+    Notes:
+    - Visualizes the distribution of the difference between actual and predicted goal counts.
+    - Useful for assessing the accuracy of the predictions.
+    """
     plot_data = x_test.copy()
     plot_data = plot_data.rename(columns = {'FTHG':'Actual Home Goals',
                                             'FTAG':'Actual Away Goals'})
@@ -111,7 +150,20 @@ def histoplot(x_test, ha = 'Home'):
     plt.xlabel('Difference between actual and predicted')
     return 
 
-def plot_features(model, fa='Home', n=15):
+def plot_features(model, fa: str = 'Home', n: int = 15) -> None:
+    """
+    Plot the top n feature importances of the given model.
+
+    Parameters:
+    - model: The machine learning model with feature importances.
+    - fa (str): A label to include in the plot title, e.g., 'Home' or 'Away'. Defaults to 'Home'.
+    - n (int): The number of top features to plot. Defaults to 15.
+
+    Notes:
+    - Scales the feature importances for better visualization.
+    - Excludes 'match_prediction' from the feature importances.
+    - Creates a bar plot showing the top n features by their importance.
+    """
     scaler = MinMaxScaler((0,100))
     fi = pd.DataFrame({'Feature':model.feature_names_,
                    'Raw Importance':model.feature_importances_})
@@ -136,12 +188,12 @@ def extract_last_results(
     """
     Extracts the last 5 results for a given team from a DataFrame and returns them as a string.
 
-    Args:
-    team (str): Name of the team.
-    dataframe (pd.DataFrame): DataFrame containing match data.
+    Parameters:
+    - team (str): Name of the team.
+    - dataframe (pd.DataFrame): DataFrame containing match data.
 
     Returns:
-    results (str): String representing the last 5 results for the given team.
+    - results (str): String representing the last 5 results for the given team.
     """
     sorted_dataframe = dataframe.copy()
     sorted_dataframe['SeasonStartYear'] = sorted_dataframe[
@@ -198,7 +250,27 @@ def extract_last_results(
     print(tabulate(results, headers=headers, tablefmt="fancy_grid"))
     return results
 
-def format_results(matches, home_team, away_team):
+def format_results(
+    matches: pd.DataFrame, 
+    home_team: str, 
+    away_team: str
+) -> pd.DataFrame:
+    """
+    Format and return match results for the specified home and away teams.
+
+    Parameters:
+    - matches (pd.DataFrame): The DataFrame containing match data.
+    - home_team (str): The name of the home team.
+    - away_team (str): The name of the away team.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing formatted results for the home and away teams.
+
+    Notes:
+    - Assumes the DataFrame contains columns 'HomeTeam', 'AwayTeam', and 'FTR'.
+    - 'FTR' is assumed to be coded as 0 for home win, 1 for draw, and 2 for away win.
+    - Formats results as strings describing the outcome from the perspective of each team.
+    """
     matches_df = matches.copy()
 
     # Define a function to convert the result code to a string
@@ -253,12 +325,12 @@ def extract_last_fixtures(
     """
     Extracts the last 5 results for a given team from a DataFrame and returns them as a string.
 
-    Args:
-    fixture (str): Selected fixture.
-    dataframe (pd.DataFrame): DataFrame containing match data.
+    Parameters:
+    - fixture (str): Selected fixture.
+    - dataframe (pd.DataFrame): DataFrame containing match data.
 
     Returns:
-    results (str): String representing the last 5 results for the given team.
+    - results (str): String representing the last 5 results for the given team.
     """
     sorted_dataframe = dataframe.copy()
     sorted_dataframe['SeasonStartYear'] = sorted_dataframe[
@@ -315,11 +387,11 @@ def get_date_suffix(
     """
     Returns the suffix for a given date.
 
-    Args:
-        day (int): The day of the month.
+    Parameters:
+    - day (int): The day of the month.
 
     Returns:
-        str: The date with the appropriate suffix.
+    - str: The date with the appropriate suffix.
     """
     if 4 <= day <= 20 or 24 <= day <= 30:
         suffix = "th"
@@ -336,12 +408,12 @@ def grab_fixture_info(
     """
     Returns the suffix for a given date.
 
-    Args:
-        current_fixtures (pd.DataFrame): The current fixtures.
-        selected_fixture (str): The fixture to dispaly
+    Parameters:
+    - current_fixtures (pd.DataFrame): The current fixtures.
+    - selected_fixture (str): The fixture to dispaly
 
     Returns:
-        None
+    - None
     """
     c_fix = current_fixtures[['HomeTeam', 'AwayTeam', 'Home Prediction',
                               'Away Prediction', 'Date', 'Fixture Time',
@@ -362,9 +434,24 @@ def grab_fixture_info(
     return c_fix
     
 def tab_fixture_prediction(
-    current_fixtures,
-    selected_fixture
-):
+    current_fixtures: pd.DataFrame,
+    selected_fixture: str
+) -> str:
+    """
+    Tabulate the fixture prediction for a selected fixture.
+
+    Parameters:
+    - current_fixtures (pd.DataFrame): DataFrame containing current fixtures.
+    - selected_fixture (str): The identifier for the selected fixture.
+
+    Returns:
+    - str: A string representing the tabulated prediction of the selected fixture.
+
+    Notes:
+    - Utilizes the `grab_fixture_info` function to extract information about the selected fixture.
+    - Focuses on the 'Home', 'Prediction', and 'Away' columns for display.
+    - Returns the tabulated data in a visually appealing 'fancy_grid' format.
+    """
     c_fix = grab_fixture_info(
         current_fixtures, 
         selected_fixture
@@ -374,9 +461,24 @@ def tab_fixture_prediction(
     
     
 def tab_fixture_details(
-    current_fixtures,
-    selected_fixture
-):
+    current_fixtures: pd.DataFrame,
+    selected_fixture: str
+) -> str:
+    """
+    Tabulate the fixture details for a selected fixture.
+
+    Parameters:
+    - current_fixtures (pd.DataFrame): DataFrame containing current fixtures.
+    - selected_fixture (str): The identifier for the selected fixture.
+
+    Returns:
+    - str: A string representing the tabulated details of the selected fixture.
+
+    Notes:
+    - Utilizes the `grab_fixture_info` function to extract detailed information about the selected fixture.
+    - Focuses on the 'Date', 'Time', and 'Stadium' columns for display.
+    - Returns the tabulated data in a visually appealing 'fancy_grid' format.
+    """
     c_fix = grab_fixture_info(
         current_fixtures, 
         selected_fixture
@@ -384,7 +486,21 @@ def tab_fixture_details(
     input_df = c_fix[['Date', 'Time', 'Stadium']]
     return (tabulate(input_df, tablefmt='fancy_grid', headers='keys'))
 
-def pad_column(data, column):
+def pad_column(data: pd.DataFrame, column: str) -> pd.DataFrame:
+    """
+    Pad a specified column in the DataFrame so all strings have the same length.
+
+    Parameters:
+    - data (pd.DataFrame): The DataFrame containing the column to be padded.
+    - column (str): The name of the column to be padded.
+
+    Returns:
+    - pd.DataFrame: The DataFrame with the specified column padded.
+
+    Notes:
+    - Pads strings in the specified column to the length of the longest string in that column.
+    - The padding is applied on the left side of the strings.
+    """
     # Determine the maximum string length
     max_length = data[column].str.len().max()
 
@@ -394,7 +510,21 @@ def pad_column(data, column):
     #data[column] = '.' + data[column]
     return data
 
-def extract_current_result(current_fixtures, selected_fixture):
+def extract_current_result(current_fixtures: pd.DataFrame, selected_fixture: str) -> pd.DataFrame:
+    """
+    Extract the current result prediction for a selected fixture.
+
+    Parameters:
+    - current_fixtures (pd.DataFrame): DataFrame containing current fixtures and their predictions.
+    - selected_fixture (str): The identifier for the selected fixture.
+
+    Returns:
+    - pd.DataFrame: A DataFrame with the current result prediction for the selected fixture.
+
+    Notes:
+    - Extracts home and away team predictions and combines them into a single DataFrame.
+    - Formats the result for easy interpretation.
+    """
     current_prediction = current_fixtures[
         current_fixtures['Fixture'] == selected_fixture][[
         'HomeTeam', 
@@ -413,9 +543,22 @@ def extract_current_result(current_fixtures, selected_fixture):
         'Prediction'].astype(int).astype(str)
     return current_prediction
 
+def plot_last_5(df: pd.DataFrame, fixture: str) -> tuple:
+    """
+    Plot the last 5 matches for the teams in a given fixture.
 
+    Parameters:
+    - df (pd.DataFrame): DataFrame containing the match data.
+    - fixture (str): The fixture for which the last 5 matches will be plotted.
 
-def plot_last_5(df, fixture):
+    Returns:
+    - tuple: A tuple containing the figure and axis objects from matplotlib.
+
+    Notes:
+    - Uses the `extract_last_fixtures` function to obtain the last matches for the teams in the fixture.
+    - Visualizes the outcomes (Win, Draw, Loss) using colored horizontal bars.
+    - The results for the home team and away team are shown on the left and right sides of a central line, respectively.
+    """
     format_res, home_team, away_team = extract_last_fixtures(fixture, df )
     
     format_res['col1'] = -1
@@ -462,7 +605,22 @@ def plot_last_5(df, fixture):
 
     return fig, ax
 
-def create_waterfall(transformed_data, regression_model, fixture):
+def create_waterfall(transformed_data: pd.DataFrame, regression_model, fixture: str) -> tuple:
+    """
+    Create a SHAP waterfall plot for a given fixture using the provided regression model.
+
+    Parameters:
+    - transformed_data (pd.DataFrame): The transformed data used by the regression model.
+    - regression_model: The regression model used for prediction.
+    - fixture (str): The fixture for which the SHAP waterfall plot will be created.
+
+    Returns:
+    - tuple: A tuple containing the figure and axis objects from matplotlib.
+
+    Notes:
+    - The SHAP waterfall plot shows the contribution of each feature to the model's prediction for a specific fixture.
+    - Highlights how each feature affects the final prediction outcome.
+    """
     transformed_data['fixture'] = transformed_data[
         'HomeTeam'].astype(str) + ' v ' + transformed_data['AwayTeam'].astype(str) 
 
@@ -492,11 +650,11 @@ def plot_mean_absolute_error_home_away(df: pd.DataFrame) -> Any:
     values over time for both model types.
 
     Parameters:
-    df (pd.DataFrame): DataFrame containing the model data. Must include columns 'Model type',
+    - df (pd.DataFrame): DataFrame containing the model data. Must include columns 'Model type',
                        'Run Date', and 'mean_ae'.
 
     Returns:
-    Matplotlib plot object
+    - Matplotlib plot object
     """
     df['Run Date'] = pd.to_datetime(df['Run Date'], format='%Y%m%d')
     # Filter for 'home' and 'away' models only
@@ -529,11 +687,11 @@ def plot_performance_metrics_result(df: pd.DataFrame) -> Any:
     values over time.
 
     Parameters:
-    df (pd.DataFrame): DataFrame containing the model data. Must include columns 'Model type',
+    - df (pd.DataFrame): DataFrame containing the model data. Must include columns 'Model type',
                        'Run Date', 'mcc', 'accuracy', and 'f1'.
 
     Returns:
-    Matplotlib plot object
+    - Matplotlib plot object
     """
     df['Run Date'] = pd.to_datetime(df['Run Date'], format='%Y%m%d')
     # Filter the data for 'result' models only

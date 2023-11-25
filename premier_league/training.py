@@ -31,16 +31,17 @@ def optimise_hyperparameters(
     max_evals: int = 5
 ) -> Dict[str, Any]:
     """
-    Optimize CatBoost hyperparameters using Hyperopt.
+    Optimise CatBoost hyperparameters using Hyperopt.
 
-    Args:
-        training_data (pd.DataFrame): The training dataset.
-        target_column (str): The name of the target column.
-        classification (bool): Whether it is a classification task (True) or regression task (False).
-        max_evals (int): The number of iterations in the optimisation.
+    Parameters:
+    - training_data (pd.DataFrame): The training dataset.
+    - target_column (str): The name of the target column.
+    - classification (bool): Whether it is a classification task (True) 
+            or regression task (False).
+    - max_evals (int): The number of iterations in the optimisation.
 
     Returns:
-        Dict[str, Any]: Dictionary containing the best hyperparameters.
+    - Dict[str, Any]: Dictionary containing the best hyperparameters.
 
     """
 
@@ -138,14 +139,14 @@ def train_model(
 ) -> Union[ctb.CatBoostClassifier, ctb.CatBoostRegressor]:
     """Train CatBoost Classifier or Regressor, optionally specify hyperparameters.
 
-    Args:
-        x_train (pandas.DataFrame): Data upon which to train.
-        y_train (pandas.Series): Target column.
-        classification (bool): Whether the problem is classification or regression.
-        verbose (bool): Whether to print the verbose output from catboost.
+    Parameters:
+    - x_train (pandas.DataFrame): Data upon which to train.
+    - y_train (pandas.Series): Target column.
+    - classification (bool): Whether the problem is classification or regression.
+    - verbose (bool): Whether to print the verbose output from catboost.
 
     Returns:
-        Trained CatBoost model.
+    - Trained CatBoost model.
     """
     logger_config.logger.info('Training Model')
     if model_type.lower() not in ['result', 'home', 'away']:
@@ -183,20 +184,36 @@ def train_model(
 
     return model, run_id
 
-def add_result_prediction(input_data, predictions):
+def add_result_prediction(
+    input_data: pd.DataFrame, 
+    predictions: Any
+) -> pd.DataFrame:
+    """
+    Concatenate input data with predictions.
+
+    Parameters:
+    - input_data (pd.DataFrame): The input data.
+    - predictions (Any): The predictions to be added to the input data.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing the combined input data and predictions.
+
+    Notes:
+    - This function assumes that the predictions can be concatenated with the input DataFrame.
+    - The predictions are concatenated along the index (axis 0).
+    """
     result = pd.concat([input_data, predictions])
     return result
-    
 
 def optimise_and_train_model(x_train: pd.DataFrame, y_train: pd.Series):
     """Call training pipeline.
 
-    Args:
-        x_train (pandas.DataFrame): Transformed data upon which to train.
-        y_train (pandas.Series): Target column.
+    Parameters:
+    - x_train (pandas.DataFrame): Transformed data upon which to train.
+    - y_train (pandas.Series): Target column.
 
     Returns:
-        (xgboost.sklearn.XGBClassifier): Trained XGBClassifier and fitted transformers.
+    - (xgboost.sklearn.XGBClassifier): Trained XGBClassifier and fitted transformers.
 
     """
     hyperparameters = optimise_hyperparameters(x_train, y_train)
@@ -208,8 +225,24 @@ def optimise_and_train_model(x_train: pd.DataFrame, y_train: pd.Series):
     return classifier
 
 
-def save_model(model_path: str, model, transformers):
-    """Save model and transformers to specified location."""
+def save_model(
+    model_path: str, 
+    model: Any, 
+    transformers: Any
+) -> None:
+    """
+    Save a model and its transformers to the specified location.
+
+    Parameters:
+    - model_path (str): The directory path where the model and transformers will be saved.
+    - model (Any): The machine learning model to be saved.
+    - transformers (Any): The transformers to be saved alongside the model.
+
+    Notes:
+    - The model is saved in a file named 'model.pkl'.
+    - The transformers are saved in a file named 'transformers.pkl'.
+    - Uses Python's pickle module for serialization.
+    """
     with open(f"{model_path}/model.pkl", "wb") as pickle_file:
         pickle.dump(model, pickle_file)
     with open(f"{model_path}/transformers.pkl", "wb") as pickle_file:

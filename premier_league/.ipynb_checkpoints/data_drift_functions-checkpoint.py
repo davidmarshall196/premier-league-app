@@ -137,6 +137,7 @@ class DriftDetector:
 
         Args:
             report_location (str) : The drift report file to be checked.
+            bucket_name (str): The S3 bucket to store the report.
         """
         data_dict = self.create_report(
             object_name=report_location,

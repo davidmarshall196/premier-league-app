@@ -23,7 +23,7 @@ from tabulate import tabulate
 import runpy
 import shap
 
-def run_inference_pipeline():
+def run_inference_pipeline() -> pd.DataFrame:
     """
     The function forms an inference pipeline for a machine learning model. 
     It loads the data, preprocesses it, and predicts the outcomes using pre-trained models.
@@ -32,7 +32,7 @@ def run_inference_pipeline():
     its configuration needs.
     
     Returns:
-        DataFrame: The final processed DataFrame with predictions.
+    - DataFrame: The final processed DataFrame with predictions.
     """
     # Load Expectations
     if constants.run_data_expectations:
