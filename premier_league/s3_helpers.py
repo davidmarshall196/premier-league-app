@@ -17,9 +17,13 @@ import streamlit as st
 
 # import constants
 try:
-    from premier_league import constants as constants
+    from premier_league import (
+        constants,
+        logger_config
+    )
 except ImportError:
     import constants
+    import logger_config
 
 
 def get_current_date_time() -> str:
@@ -66,21 +70,26 @@ def grab_data_s3(
                 region_name="eu-west-2",
             )
         s3 = session.client("s3")  # Create a connection to S3
+        logger_config.logger.info(f'Loading data from {bucket}/{file_path}')
         obj = s3.get_object(
             Bucket=bucket, Key=file_path
         )  # Get object and file from bucket
         data = pd.read_csv(obj["Body"])
+        logger_config.logger.info(f'Successfully loaded data from {bucket}/{file_path}')
         return data
     except NoCredentialsError:
+        logger_config.logger.error(f"An error occurred reading {bucket}/{file_path}: %s", str(e))
         raise NoCredentialsError(
             """Credentials not available. Make sure the profile
             name is correct and the credentials are set up properly."""
         )
     except PartialCredentialsError:
+        logger_config.logger.error(f"An error occurred reading {bucket}/{file_path}: %s", str(e))
         raise PartialCredentialsError(
             "Incomplete credentials. Please check your AWS configuration."
         )
     except Exception as e:
+        logger_config.logger.error(f"An error occurred reading {bucket}/{file_path}: %s", str(e))
         raise Exception(f"An unexpected error occurred: {str(e)}")
 
 
@@ -119,6 +128,7 @@ def save_data_s3(
                 region_name=os.getenv("AWS_DEFAULT_REGION")
             )
         s3_resource = session.resource("s3")
+        logger_config.logger.info(f'Savng data to {bucket}/{file_path}')
         if file_format.lower() == 'csv':
             # Save DataFrame as a CSV
             buffer = StringIO()
@@ -135,14 +145,17 @@ def save_data_s3(
         else:
             raise ValueError(f"File format '{file_format}' is not supported.")
     except NoCredentialsError:
+        logger_config.logger.error(f"An error occurred saving {bucket}/{file_path}: %s", str(e))
         raise NoCredentialsError(
             "Credentials not available. Make sure the profile name is correct and the credentials are set up properly."
         )
     except PartialCredentialsError:
+        logger_config.logger.error(f"An error occurred saving {bucket}/{file_path}: %s", str(e))
         raise PartialCredentialsError(
             "Incomplete credentials. Please check your AWS configuration."
         )
     except Exception as e:
+        logger_config.logger.error(f"An error occurred saving {bucket}/{file_path}: %s", str(e))
         raise Exception(f"An unexpected error occurred: {str(e)}")
 
 
@@ -174,6 +187,7 @@ def save_transformer_s3_pickle(
             )
         
         s3_client = session.client("s3")
+        logger_config.logger.info(f'Saving transformer to {bucket}/{file_path}')
         if is_transformer:
             # Serialise the transformer object to a byte string
             serialised_transformer = pickle.dumps(transformer)
@@ -183,7 +197,7 @@ def save_transformer_s3_pickle(
                 Bucket=bucket, 
                 Key=file_path, 
                 Body=serialised_transformer)
-            print(f"Transformer object is saved to S3 bucket {bucket} at {file_path}")
+            logger_config.logger.info(f'Transformer saved to {bucket}/{file_path}')
         
         else:
             with BytesIO() as f:
@@ -192,14 +206,16 @@ def save_transformer_s3_pickle(
                 f.seek(0)  # Move pointer to the start of the file
                 s3_client.put_object(
                     Bucket=bucket, Key=file_path, Body=f.getvalue())
-                print(f"Transformer object is saved to S3 bucket {bucket} at {file_path}")
+                logger_config.logger.info(f'Transformer saved to {bucket}/{file_path}')
 
     except NoCredentialsError:
+        logger_config.logger.error(f"An error occurred saving {bucket}/{file_path}: %s", str(e))
         raise NoCredentialsError(
             "Credentials not available. Make sure the profile "
             "name is correct and the credentials are set up properly."
         )
     except PartialCredentialsError:
+        logger_config.logger.error(f"An error occurred saving {bucket}/{file_path}: %s", str(e))
         raise PartialCredentialsError(
             "Incomplete credentials. Please check your AWS configuration."
         )
@@ -253,6 +269,7 @@ def load_transformer_s3_pickle(
             )
 
         # Get the latest model file
+        logger_config.logger.info(f'Grabbing transformer from {bucket}/{prefix}')
         latest_file = get_latest_model_file(bucket, prefix, session)
         if not latest_file:
             raise FileNotFoundError("No model files found with the given prefix.")
@@ -266,6 +283,7 @@ def load_transformer_s3_pickle(
         else:
             with BytesIO(response['Body'].read()) as f:
                 transformer = pickle.load(f)
+        logger_config.logger.info(f'Loaded transformer from {bucket}/{prefix}')
 
         return transformer
 
@@ -310,13 +328,14 @@ def load_and_display_image_from_s3(
         s3_client = session.client("s3")
         # Get the image object from S3
         object_name = team_name.replace("'","").replace(' ','_')
+        logger_config.logger.info(f'Loading image from {bucket_name}/{object_name}')
         response = s3_client.get_object(Bucket=bucket_name, 
                                         Key=object_name)
         image_content = response['Body'].read()
 
         # Open the image and resize it
         image = Image.open(io.BytesIO(image_content))
-
+        logger_config.logger.info(f'Loaded image from {bucket_name}/{object_name}')
         return image
 
 
@@ -391,7 +410,9 @@ def json_to_s3(data_dict: dict, bucket_name: str, object_key: str) -> None:
     s3 = boto3.client("s3", config=config)
 
     # Convert the dictionary to a JSON string
+    logger_config.logger.info(f'Saving JSON to {bucket_name}/{object_key}')
     json_str = json.dumps(data_dict)
 
     # Upload the JSON string to the specified S3 bucket
     s3.put_object(Body=json_str, Bucket=bucket_name, Key=object_key)
+    logger_config.logger.info(f'Saved JSON to {bucket_name}/{object_key}')

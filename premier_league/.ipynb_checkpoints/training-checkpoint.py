@@ -16,102 +16,14 @@ import mlflow.catboost
 
 # import constants
 try:
-    from premier_league import constants as constants
-except ModuleNotFoundError:
+    from premier_league import (
+        constants,
+        logger_config
+    )
+except ImportError:
     import constants
+    import logger_config
     
-
-def optimise_hyperparameters_xgboost(
-    x_train: pd.DataFrame,
-    y_train: pd.Series,
-    hyperparameter_ranges: Union[dict, None] = None,
-) -> (dict, object):
-    """Find Bayesian optimised hyperparameters for XGBoost.
-
-    Args:
-        x_train (pandas.DataFrame): Data upon which to train.
-        y_train (pandas.Series): Target column.
-        hyperparameter_ranges (dict): Dictionary of tuples containing min and max
-            values for each hyperparameter to be tuned. This includes the eval_metric,
-            bayes_opt_init_points, and bayes_opt_n_iter. The default is as follows:
-            {
-                "alpha": (0, 500),
-                "learning_rate": (0, 1),
-                "max_depth": (3, 10),
-                "subsample": (0.5, 0.9),
-                "eval_metric": "logloss",
-                "bayes_opt_init_points": 5,
-                "bayes_opt_n_iter": 25,
-            }
-
-    Returns:
-        (dict): Optimised XGBoost classifier hyperparameters.
-
-    """
-    dtrain = xgboost.DMatrix(
-        x_train,
-        label=y_train,
-        enable_categorical=True,
-    )
-
-    # This is to avoid using mutable data structures as a default argument
-    if not hyperparameter_ranges:
-        hyperparameter_ranges = {
-            "alpha": (0, 500),
-            "learning_rate": (0.001, 1),
-            "max_depth": (3, 10),
-            "subsample": (0.5, 0.9),
-            "eval_metric": "logloss",
-            "bayes_opt_init_points": 5,
-            "bayes_opt_n_iter": 30,
-        }
-
-    evaluation_metric = hyperparameter_ranges.pop("eval_metric")
-    bayes_opt_init_points = hyperparameter_ranges.pop("bayes_opt_init_points")
-    bayes_opt_n_iter = hyperparameter_ranges.pop("bayes_opt_n_iter")
-
-    # Bayesian Optimization function for xgboost
-    # Specify the parameters you want to tune as keyword arguments
-    def bo_tune_xgb(
-        max_depth,
-        learning_rate,
-        alpha,
-        subsample,
-    ):
-        """Bayesian Optimisation function for XGBoost."""
-        params = {
-            "max_depth": int(max_depth),
-            "alpha": alpha,
-            "learning_rate": learning_rate,
-            "subsample": subsample,
-            "eval_metric": evaluation_metric,
-            "nthread": -1,
-        }
-
-        cv_result = xgboost.cv(
-            params, dtrain, num_boost_round=70, nfold=5, early_stopping_rounds=5
-        )
-        return 1 - cv_result[f"test-{evaluation_metric}-mean"].iloc[-1]
-
-    xgb_bo = BayesianOptimization(
-        bo_tune_xgb,
-        hyperparameter_ranges,
-    )
-
-    xgb_bo.maximize(
-        init_points=bayes_opt_init_points, n_iter=bayes_opt_n_iter, acq="ei"
-    )
-
-    hyperparameters = xgb_bo.max["params"]
-    hyperparameters["nthread"] = -1
-    hyperparameters["eval_metric"] = evaluation_metric
-
-    # Converting values from float to int
-    hyperparameters["max_depth"] = int(hyperparameters["max_depth"])
-
-    return hyperparameters, xgb_bo.res
-
-
 def optimise_hyperparameters(
     training_data: pd.DataFrame, 
     target_column: str, 
@@ -161,6 +73,9 @@ def optimise_hyperparameters(
 
     class HYPOpt(object):
         def __init__(self, x_train, x_test, y_train, y_test):
+            logger_config.logger.info(
+                "Optimising Hyperparameters"
+            )
             self.x_train = x_train
             self.x_test = x_test
             self.y_train = y_train
@@ -169,7 +84,7 @@ def optimise_hyperparameters(
         def process(self, fn_name, space, trials, algo, max_evals):
             fn = getattr(self, fn_name)
             try:
-                print('Entering fmin')
+                logger_config.logger.info('Entering fmin')
                 result = fmin(fn=fn, space=space, 
                               algo=algo, max_evals=max_evals, trials=trials)
             except Exception as e:
@@ -180,11 +95,11 @@ def optimise_hyperparameters(
             clf = ctb.CatBoostClassifier(
                 **para['clf_params']) if classification else ctb.CatBoostRegressor(
                 **para['clf_params'])
-            print('CatBoost initialized')
+            logger_config.logger.info('CatBoost initialized')
             return self.train_clf(clf, para)
 
         def train_clf(self, clf, para):
-            print('Fitting model')
+            logger_config.logger.info('Fitting model')
             if classification:
                 clf.fit(self.x_train, self.y_train,
                         eval_set=[(self.x_train, 
@@ -198,7 +113,7 @@ def optimise_hyperparameters(
                 pred = clf.predict(self.x_test)
                 loss = mean_squared_error(self.y_test, pred)
 
-            print(f'Loss: {loss}')
+            logger_config.logger.info(f'Loss: {loss}')
             return {'loss': loss, 'status': STATUS_OK}
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -214,52 +129,6 @@ def optimise_hyperparameters(
     return best_param
 
     
-def train_model_xgb(
-    x_train: pd.DataFrame,
-    y_train: pd.Series,
-    hyperparameters: Union[dict, None] = None,
-    classification: bool = True
-) -> xgboost.XGBClassifier:
-    """Train XGBoost Classifier, optionally specifiy hyperparemeters, or save model.
-
-    Args:
-        x_train (pandas.DataFrame): Data upon which to train.
-        y_train (pandas.Series): Target column.
-        hyperparameters (dict): Opitionally specify hypeparemeters for model
-            (Default value: None)
-        save_path (str): Optionally specify full or relative path. If not specified,
-            don't save (Default value: None)
-
-    Returns:
-        (xgboost.Classifier): Trained XGBoost model.
-
-    """
-    if classification:
-        if hyperparameters:
-            model = xgboost.XGBClassifier(enable_categorical=True,
-                                           tree_method='hist'
-                                           **hyperparameters)
-        else:
-            model = xgboost.XGBClassifier(tree_method='hist',
-                                           enable_categorical=True)
-        model.fit(
-        x_train,
-        y_train,
-        )
-    else:
-        if hyperparameters:
-            model = xgboost.XGBRegressor(enable_categorical=True,
-                                           tree_method='hist'
-                                           **hyperparameters)
-        else:
-            model = xgboost.XGBRegressor(tree_method='hist',
-                                           enable_categorical=True)
-        model.fit(
-        x_train,
-        y_train,
-        )
-    return model
-
 def train_model(
     x_train: pd.DataFrame,
     y_train: pd.Series,
@@ -278,6 +147,7 @@ def train_model(
     Returns:
         Trained CatBoost model.
     """
+    logger_config.logger.info('Training Model')
     if model_type.lower() not in ['result', 'home', 'away']:
         raise ValueError('Model type should be "result", "home" or "away".')
     
@@ -299,6 +169,7 @@ def train_model(
         model.fit(x_train, y_train, verbose=verbose)
 
         # Log hyperparameters and other relevant information
+        logger_config.logger.info("Logging parameters to MLFlow")
         mlflow.log_params(hyperparameters or {})
         mlflow.log_param("Model type", model_type)
         mlflow.log_param("Run Date", constants.current_time)

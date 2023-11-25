@@ -9,9 +9,13 @@ from typing import Optional
 
 # import constants
 try:
-    from premier_league import constants as constants
+    from premier_league import (
+        constants,
+        logger_config
+    )
 except ImportError:
     import constants
+    import logger_config
 
 def generate_email_body(
     alert_type: str,
@@ -93,7 +97,9 @@ def generate_presigned_s3_url(
         )
         return url
     except Exception as e:
-        print(f"Error generating presigned URL: {e}")
+        logger_config.logger.error(
+            f"Error generating presigned URL: {e}"
+        )
         return None
 
 def send_sns_notification(
@@ -101,8 +107,7 @@ def send_sns_notification(
     Message: str, 
     Topic: str, 
     profile_name: Optional[str] = 'premier-league-app',
-    region: str = "eu-west-2",
-    Print: bool = False
+    region: str = "eu-west-2"
 ):
     """
     Send a message on a specified SNS topic.
@@ -110,32 +115,41 @@ def send_sns_notification(
     Args - Subject:str, Message:str, Topic:str, profile_name: Optional[str], region: str, Print:bool=False
     """
     try:
-        session = boto3.Session(profile_name=profile_name) if profile_name else boto3.Session()
+        session = boto3.Session(
+            profile_name=profile_name) if profile_name else boto3.Session()
         sns = session.client('sns', region)
 
-        if Print:
-            print(f'Send SNS message to topic {Topic}')
+        logger_config.logger.info(
+            f'Sending SNS message to topic {Topic}')
 
         response = sns.publish(
             TopicArn=Topic,
             Subject=Subject,
             Message=Message
         )
-
+        logger_config.logger.info(
+            f'Sent SNS message to topic {Topic}')
         return response
 
-    except NoCredentialsError:
+    except NoCredentialsError as e:
+        logger_config.logger.error(
+            f"Error sending SNS: {e}"
+        )
         raise NoCredentialsError(
             "Credentials not available. Make sure the profile "
             "name is correct and the credentials are set up properly."
         )
-    except PartialCredentialsError:
+    except PartialCredentialsError as e:
+        logger_config.logger.error(
+            f"Error sending SNS: {e}"
+        )
         raise PartialCredentialsError(
             "Incomplete credentials. Please check your AWS configuration."
         )
     except Exception as e:
-        print(f'Failed to send message on topic: "{Topic}"')
-        print(f'Reason: {e}')
+        logger_config.logger.error(
+            f"Error sending SNS: {e}"
+        )
         return ["FAIL", e]
 
 def send_email(

@@ -32,7 +32,6 @@ The app uses [Catboost](https://catboost.ai/) for the underlying predictions. Th
 - Away Team Score
 
 ## To Do
-- Logging
 - Scheduling
 - Deployment
 - Flake8 + Black

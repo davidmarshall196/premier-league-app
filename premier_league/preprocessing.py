@@ -4,20 +4,13 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from typing import Tuple
 try:
-    from premier_league import preprocessing_helpers
+    from premier_league import (
+        preprocessing_helpers,
+        logger_config
+    )
 except ImportError:
     import preprocessing_helpers
-
-#columns_req = ['season', 'Date','HomeTeam','AwayTeam','FTHG','FTAG','FTR']
-#
-#df = pd.read_csv('../data/initial_data.csv')
-#df.head()
-#
-#playing_df = df[columns_req]
-#
-#playing_df
-
-#playing_stats = preprocessing_helpers.run_pipeline(playing_df)
+    import logger_config
 
 class CustomTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, dtypes=None):
@@ -28,12 +21,14 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         self.dtypes = dtypes
 
     def fit(self, X, y=None, **kwargs):
+        logger_config.logger.info("Fitting Transformer")
         self.input_columns = list(X.select_dtypes(self.dtypes).columns)
         X = preprocessing_helpers.run_pipeline(X)
         self.final_columns = X.columns
         return self
         
     def transform(self, X, y=None, **kwargs):
+        logger_config.logger.info("Transforming Data")
         X = preprocessing_helpers.run_pipeline(X)
         X_columns = X.columns
         # if columns in X had values not in the data set used during
@@ -57,16 +52,10 @@ def fit_transformers(x_train: pd.DataFrame):
     Returns:
         (sklearn.compose.ColumnTransformer): Transformed data and fitted transformer.
     """
+    logger_config.logger.info("Fitting Transformer")
     transformers = CustomTransformer() 
     x_train = transformers.fit(x_train)
     return transformers
-
-#transformer_custom = CustomTransformer()    
-#transformer_custom.fit(playing_df)
-#
-#new_df = transformer_custom.transform(playing_df)
-#new_df.head()
-#
 
 def transform_data(
     data: pd.DataFrame, 
@@ -83,6 +72,7 @@ def transform_data(
     Returns:
         transformed_data (pandas.DataFrame): Transformed data.
     """
+    logger_config.logger.info("Transforming Data")
     transformed_data = transformer.transform(
         data
     )
@@ -104,11 +94,11 @@ def split_data(
         (pandas.DataFrame): Training dataset.
         (pandas.DataFrame): Testing dataset.
     """
+    logger_config.logger.info("Splitting Data")
     train_data = data.sample(frac=train_ratio, axis=0)
     test_data = data[~data.isin(train_data)].dropna().reset_index(drop=True)
     train_data = train_data.reset_index(drop=True)
     return train_data, test_data
-
 
 
 def validate_data(
@@ -124,6 +114,7 @@ def validate_data(
     Returns:
         (dict): Validation results.
     """
+    logger_config.logger.info("Validating Data")
     data = ge.from_pandas(data, expectation_suite=data_expectations)
     validation_results = data.validate()
     return validation_results.to_json_dict()

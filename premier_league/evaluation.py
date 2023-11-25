@@ -2,6 +2,14 @@
 from sklearn import metrics
 import mlflow
 
+# import constants
+try:
+    from premier_league import (
+        logger_config
+    )
+except ImportError:
+    import logger_config
+
 def evaluate_model(
     predictions: list, 
     actual_values: list,
@@ -17,6 +25,9 @@ def evaluate_model(
     Returns:
         evaluation_metrics (dict): Key-value pairs of metric names and values.
     """
+    logger_config.logger.info(
+        f'Evaluating {model_type} model'
+    )
     if model_type.lower() not in ['result', 'home', 'away']:
         raise ValueError('Model type should be "result", "home" or "away".')
     
@@ -35,6 +46,9 @@ def evaluate_model(
         evaluation_metrics["mean_ae"] = metrics.mean_absolute_error(actual_values, predictions)
         
     with mlflow.start_run(run_id=run_id) as run:
+        logger_config.logger.info(
+            "logging evaluation metrics to mlflow"
+        )
         for metric, value in evaluation_metrics.items():
             if metric != "confusion_matrix":  
                 mlflow.log_metric(metric, value)

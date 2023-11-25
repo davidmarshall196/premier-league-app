@@ -14,9 +14,13 @@ from datetime import datetime
 
 # import constants
 try:
-    from premier_league import constants as constants
+    from premier_league import (
+        constants,
+        logger_config
+    )
 except ImportError:
     import constants
+    import logger_config
 
 
 class AutoGreatExpectations:
@@ -131,7 +135,7 @@ class AutoGreatExpectations:
             )
         ) and self.data[col].notnull().sum() > 0:
             if verbose:
-                print(f"Adding min/max expecations to column {col}")
+                logger_config.logger.info(f"Adding min/max expecations to column {col}")
             ge_object.expect_column_values_to_be_between(
                 col,
                 min_value=self._min_value(col, min_buffer=min_buffer),
@@ -291,21 +295,27 @@ def save_expectations(
                     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
                     region_name="eu-west-2",
                 )
-        except NoCredentialsError:
+        except NoCredentialsError as e:
+            logger_config.logger.error(
+                f"An error occurred reading {bucket}/{expectations_path}: %s", str(e))
             raise NoCredentialsError(
                 """Credentials not available. Make sure the profile
                 name is correct and the credentials are set up properly."""
             )
-        except PartialCredentialsError:
+        except PartialCredentialsError as e:
+            logger_config.logger.error(
+                f"An error occurred reading {bucket}/{expectations_path}: %s", str(e))
             raise PartialCredentialsError(
                 "Incomplete credentials. Please check your AWS configuration."
             )
         except Exception as e:
+            logger_config.logger.error(
+                f"An error occurred reading {bucket}/{expectations_path}: %s", str(e))
             raise Exception(f"An unexpected error occurred: {str(e)}")
-            
+        logger_config.logger.info(f'Saving expectations to {bucket}/{expectations_path}')
         s3 = session.client("s3")  # Create a connection to S3
         s3.put_object(Body=json_file, Bucket=bucket, Key=expectations_path)
-
+        logger_config.logger.info(f'Saved expectations to {bucket}/{expectations_path}')
     else:
         with open(expectations_path, "w") as expectations_file:
             expectations_file.write(json_file)
@@ -328,13 +338,13 @@ def validate_data(
     data = ge.from_pandas(data, expectation_suite=data_expectations)
     validation_results = data.validate()
     if validation_results["success"]:
-        print(validation_results["statistics"])
+        logger_config.logger.info(validation_results["statistics"])
     else:
-        print("Validated:", validation_results["success"])
-        print(validation_results["statistics"])
+        logger_config.logger.error(f"Validated: {validation_results['success']}")
+        logger_config.logger.error(validation_results["statistics"])
         for result in validation_results["results"]:
             if not result["success"]:
-                print(result)
+                logger_config.logger.error(result)
         raise Exception("Data does not meet expectations!")
     save_expectations(
         validation_results,
@@ -359,7 +369,7 @@ def view_suite_summary(data_ge):
     suite = data_ge.get_expectation_suite(discard_failed_expectations=False)
     suite_str = str(suite)
     total_exp = suite_str.count("expectation_type")
-    print(f"Total Expectations: {total_exp}")
+    logger_config.logger.info(f"Total Expectations: {total_exp}")
     distinct_list = set(
         [
             s
@@ -367,10 +377,11 @@ def view_suite_summary(data_ge):
             if "expect_" in s
         ]
     )
-    print("Counts:")
+    logger_config.logger.info(f"Counts:")
     for exp in distinct_list:
         exp_count = suite_str.count(exp)
         print(f"{exp}: {exp_count}")
+        logger_config.logger.info(f"{exp}: {exp_count}")
 
 def latest_exp_file(
     bucket: str = constants.S3_BUCKET,
@@ -393,7 +404,7 @@ def latest_exp_file(
         
         latest_model = None
         latest_date = None
-
+        logger_config.logger.info(f'Looking for latest expectations file')
         for obj in response.get('Contents', []):
             filename = obj['Key']
             file_date_str = filename.split('_')[-1].split('.')[0]  
@@ -442,23 +453,27 @@ def load_latest_expectations(
                 region_name="eu-west-2"  # or your AWS region
             )
         s3_client = session.resource("s3")
+        logger_config.logger.info(f'Loading expectations from {s3_bucket}/{expectations_path}')
         content_object = s3_client.Object(s3_bucket, expectations_path)
         file_content = content_object.get()["Body"].read().decode("utf-8")
         data_expectations = json.loads(file_content)
+        logger_config.logger.info(f'Loaded expectations from {s3_bucket}/{expectations_path}')
         return data_expectations
         
-    except NoCredentialsError:
+    except NoCredentialsError as e:
+        logger_config.logger.error(
+            f"An error occurred reading {s3_bucket}/{expectations_path}: %s", str(e))
         raise NoCredentialsError(
             "Credentials not available. Make sure the profile "
             "name is correct and the credentials are set up properly."
         )
-    except PartialCredentialsError:
+    except PartialCredentialsError as e:
+        logger_config.logger.error(
+            f"An error occurred reading {s3_bucket}/{expectations_path}: %s", str(e))
         raise PartialCredentialsError(
             "Incomplete credentials. Please check your AWS configuration."
         )
     
-
-
 def view_full_suite(data_ge):
     """Prints a all the current expectations.
 
@@ -469,6 +484,6 @@ def view_full_suite(data_ge):
     Returns:
         suite (expectations object): A json list of current expectations.
     """
-    print(f"Data GE object type: {type(data_ge)}")
+    logger_config.logger.info(f"Data GE object type: {type(data_ge)}")
     suite = data_ge.get_expectation_suite(discard_failed_expectations=False)
     return suite

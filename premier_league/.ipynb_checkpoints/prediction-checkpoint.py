@@ -4,6 +4,14 @@ import pickle
 import pandas as pd
 import shap
 
+# import constants
+try:
+    from premier_league import (
+        logger_config
+    )
+except ImportError:
+    import logger_config
+
 
 def get_top_shap(df: pd.DataFrame, model, encoded_columns: list = None):
     """Get top three shap features that influence positive class predictions.
@@ -63,6 +71,8 @@ def predict(data: pd.DataFrame, model) -> list:
     Returns:
         list: The list of predicted values.
     """
+    logger_config.logger.info("Making Predictions")
+    
     data = data[model.feature_names_]
     if 'Regress' in str(type(model)):
         predictions = model.predict(data)
@@ -83,6 +93,7 @@ def add_res_prediction(input_data):
     Returns:
         str: The predicted match result ('H' for home win, 'A' for away win, 'D' for draw).
     """
+    logger_config.logger.info("Adding result prediction")
     if input_data['Home Prediction'] > input_data['Away Prediction']:
         return 'H'
     elif input_data['Home Prediction'] < input_data['Away Prediction']:

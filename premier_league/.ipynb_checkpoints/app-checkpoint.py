@@ -12,9 +12,11 @@ import data_extraction
 import visualisations
 import constants
 import s3_helpers
+import logger_config
 
 # source env_premier_league/bin/activate
 # streamlit run premier_league/streamlit_app.py
+logger_config.logger.info("Streamlit: app starting")
 
 # Grab data
 transformed_data = s3_helpers.grab_data_s3(
@@ -157,16 +159,16 @@ with col1:
     st.pyplot(plt)
 
     plt.title('Match Result Performance')
-    visualisations.plot_performance_metrics_result(
+    fig = visualisations.plot_performance_metrics_result(
         model_performance
     )
-    st.pyplot() 
+    st.pyplot(fig) 
 
     plt.title('Home and Away Goals Performance')
-    visualisations.plot_mean_absolute_error_home_away(
+    fig = visualisations.plot_mean_absolute_error_home_away(
         model_performance
     )
-    st.pyplot() 
+    st.pyplot(fig) 
 
 
 # Embed the table in the right column
@@ -178,7 +180,11 @@ with col2:
     selected_fixture = st.selectbox(
         "Select a fixture:", current_fixtures['Fixture'].tolist())
     st.subheader(f"Selected Fixture: {selected_fixture}")
-    
+
+    # Badges
+    s3_helpers.display_side_by_side_images(
+        selected_fixture
+    )
 
     # Current fixture
     current_prediction = visualisations.extract_current_result(

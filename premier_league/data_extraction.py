@@ -5,35 +5,18 @@ import logging
 try:
     from premier_league import (
         constants,
-        s3_helpers
+        s3_helpers,
+        logger_config
     )
 except ImportError:
     import constants
     import s3_helpers
+    import logger_config
 import importlib
 import datetime
 from datetime import datetime as dt
 import numpy as np
 from urllib.error import HTTPError
-
-importlib.reload(constants)
-
-#·Set up logging
-#now = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-#logger = logging.getLogger("data_extraction")
-#ch = logging.StreamHandler()  # create console handler and set level to info
-#ch.setLevel(constants.log_level)
-#log_filename = f'data_extraction_{now}.log'
-#fh = logging.FileHandler(f'{constants.log_folder}/{log_filename}')
-#fh.setLevel(constants.log_level) # create file logger to save logs to a file
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')    # create formatter
-#ch.setFormatter(formatter)  # add formatter to ch
-#fh.setFormatter(formatter)  # add formatter to fh
-#logger.addHandler(ch)       # add ch to logger
-#logger.addHandler(fh)       # add fh to logger
-#
-#start = datetime.datetime.now()
-#logger.info("Starting Data Extraction...")
 
 def generate_seasons_list(start, end):
     seasons_list = []
@@ -54,8 +37,8 @@ def load_all_data(save_loc, cols_req):
 
     full_df = pd.DataFrame()
     for n, csv in enumerate(full_csv_list):
-        print(f'Attempting csv {n+1} / {len(full_csv_list)}')
-        print(csv)
+        logger_config.logger.info(f'Attempting csv {n+1} / {len(full_csv_list)}')
+        logger_config.logger.info(f'Trying {csv}')
         try:
             data = pd.read_csv(csv)
             if csv[40:41] == '9':
@@ -109,8 +92,10 @@ def add_new_data(full_data, cols_req, save_loc,
     s1 = '20' + s[0:2] + '-' + s[2:4]
     full_data_remove = full_data[full_data['season'] != s1]
     try:
-        new_data = pd.read_csv(
-            f'https://www.football-data.co.uk/mmz4281/{s}/E0.csv')
+        csv_name = f'https://www.football-data.co.uk/mmz4281/{s}/E0.csv'
+        logger_config.logger.info(
+            f'Trying to read data from {csv_name}')
+        new_data = pd.read_csv(csv_name)
         season = f'20{s[0:2]}-{s[2:4]}'
         new_data['season'] = season
         new_data = new_data[cols_req]
@@ -125,10 +110,12 @@ def add_new_data(full_data, cols_req, save_loc,
             full_data_remove,
             save_loc
         )
-        print(f'Data saved at {save_loc}')
+        logger_config.logger.info(
+            f'Data saved at {save_loc}')
         return full_data_remove
     except HTTPError as e:
-        print('No data found')
+        logger_config.logger.error(
+            f'No data found at {save_loc}')
         return full_data
     
 
@@ -142,18 +129,21 @@ def replace_team_names(input_data,
 def get_fixture_times():
     s = extract_season()
     s1 = s[0:2]
-    fix = pd.read_csv(
-        f'https://fixturedownload.com/download/epl-20{s1}-UTC.csv')
+    csv_name = f'https://fixturedownload.com/download/epl-20{s1}-UTC.csv'
+    logger_config.logger.info(f'Attempting to read from {csv_name}')
+    fix = pd.read_csv(csv_name)
     fix = fix[fix['Result'].isna()]
     if fix.shape[0] == 0:
         print('No fixtures. Attempting to get next season')
         s_new = str(int(s1) + 1)
-        fix = pd.read_csv(
-            f'https://fixturedownload.com/download/epl-20{s_new}-UTC.csv')
+        csv_name = f'https://fixturedownload.com/download/epl-20{s_new}-UTC.csv'
+        logger_config.logger.info(f'Attempting to read from {csv_name}')
+        fix = pd.read_csv(csv_name)
         fix = fix[fix['Result'].isna()]
         if fix.shape[0] > 0:
-            print('Success')
+            logger_config.logger.info(f'Successfully read from {csv_name}')
         else:
+            logger_config.logger.error(f'No data found at {csv_name}')
             raise ValueError('No fixtures found. Please check')
     fix['season'] = '20' + s[0:2] + '-' + s[2:4]
     fix.columns = ['Match Number', 'Round Number', 'Date', 
@@ -193,8 +183,12 @@ def extract_current_fixtures(transformed_data):
 def get_fixtures(full_data):
     s = extract_season()
     s1 = s[0:2]
-    fix = pd.read_csv(
-        f'https://fixturedownload.com/download/epl-20{s1}-UTC.csv')
+    csv_name = f'https://fixturedownload.com/download/epl-20{s1}-UTC.csv'
+    logger_config.logger.info(
+        f'Loading data from {csv_name}')
+    fix = pd.read_csv(csv_name)
+    logger_config.logger.info(
+        f'Loaded data from {csv_name}')
     fix = fix[fix['Result'].isna()]
     fix['season'] = '20' + s[0:2] + '-' + s[2:4]
     fix = fix[['season', 'Date', 'Home Team', 'Away Team']]

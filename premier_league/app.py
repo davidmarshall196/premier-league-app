@@ -12,9 +12,11 @@ import data_extraction
 import visualisations
 import constants
 import s3_helpers
+import logger_config
 
 # source env_premier_league/bin/activate
 # streamlit run premier_league/streamlit_app.py
+logger_config.logger.info("Streamlit: app starting")
 
 # Grab data
 transformed_data = s3_helpers.grab_data_s3(

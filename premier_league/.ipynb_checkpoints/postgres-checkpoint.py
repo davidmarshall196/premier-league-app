@@ -5,9 +5,13 @@ import time
 
 # import constants
 try:
-    from premier_league import constants as constants
+    from premier_league import (
+        constants,
+        logger_config
+    )
 except ImportError:
     import constants
+    import logger_config
 
 def get_instance_status(
     instance_identifier: str,
@@ -30,10 +34,15 @@ def get_instance_status(
             )
             client = session.client('rds')
 
+        logger_config.logger.info(
+            f"Grabbing instance status of {instance_identifier}"
+        )
         response = client.describe_db_instances(DBInstanceIdentifier=instance_identifier)
         db_instances = response.get('DBInstances', [])
 
         if not db_instances:
+            logger_config.logger.error(
+                f"No RDS instance found with identifier {instance_identifier}.")
             raise Exception(f"No RDS instance found with identifier {instance_identifier}.")
 
         # Assuming there's always only one instance with the given identifier
@@ -42,6 +51,9 @@ def get_instance_status(
         return current_status
 
     except ClientError as e:
+        logger_config.logger.error(
+            f"Error retrieving RDS instance status: {e}"
+        )
         raise Exception(f"Error retrieving RDS instance status: {e}")
 
 def wait_for_instance_status(
@@ -68,14 +80,18 @@ def wait_for_instance_status(
             instance_info = db_instances[0]
             current_status = instance_info.get('DBInstanceStatus')
 
-            print(f"Current status of RDS instance '{instance_identifier}': {current_status}")
-
+            logger_config.logger.info(
+                f"Current status of RDS instance '{instance_identifier}': {current_status}"
+            )
+            
             if current_status == desired_status:
-                print(f"RDS instance '{instance_identifier}' reached status '{desired_status}'.")
+                logger_config.logger.info(
+                    f"RDS instance '{instance_identifier}' reached status '{desired_status}'."
+                )
                 break
 
         except ClientError as e:
-            print(f"Error checking RDS instance status: {e}")
+            logger_config.logger.error(f"Error checking RDS instance status: {e}")
 
         time.sleep(check_interval)  # Wait before the next check
 
@@ -92,10 +108,12 @@ def start_rds_instance(
     client = session.client('rds')
     try:
         client.start_db_instance(DBInstanceIdentifier=instance_identifier)
-        print(f"Starting RDS instance '{instance_identifier}'")
+        logger_config.logger.info(
+            f"Starting RDS instance '{instance_identifier}'")
         wait_for_instance_status(instance_identifier, 'available')
     except ClientError as e:
-        print(f"Error starting RDS instance: {e}")
+        logger_config.logger.error(
+            f"Error starting RDS instance: {e}")
 
 def stop_rds_instance(
     instance_identifier,
@@ -109,8 +127,8 @@ def stop_rds_instance(
     client = session.client('rds')
     try:
         client.stop_db_instance(DBInstanceIdentifier=instance_identifier)
-        print(f"Stopping RDS instance '{instance_identifier}'")
+        logger_config.logger.info(f"Stopping RDS instance '{instance_identifier}'")
     except ClientError as e:
-        print(f"Error stopping RDS instance: {e}")
+        logger_config.logger.error(f"Error stopping RDS instance: {e}")
 
 

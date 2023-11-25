@@ -15,11 +15,15 @@ import os
 
 # import constants
 try:
-    from premier_league import constants as constants
-    from premier_league import email_functions
+    from premier_league import (
+        constants,
+        email_functions,
+        logger_config
+    )
 except ImportError:
     import constants
     import email_functions
+    import logger_config
 
 class DriftDetector:
     """
@@ -93,25 +97,32 @@ class DriftDetector:
                 report_html = buffer.read()
 
             # Save the report directly to S3
+            logger_config.logger.info(f'Saving drift report to {bucket_name}/{object_name}')
             s3_client.put_object(
                 Bucket=bucket_name, 
                 Key=object_name, 
                 Body=report_html
             )
-            print(f"HTML report saved to {bucket_name}/{object_name}")
+            logger_config.logger.info(f'Saved drift report to {bucket_name}/{object_name}')
             return report.as_dict()
 
 
-        except NoCredentialsError:
+        except NoCredentialsError as e:
+            logger_config.logger.error(
+                f'Error saving drift report to {bucket_name}/{object_name}:{e}')
             raise NoCredentialsError(
                 "Credentials not available. Make sure the profile "
                 "name is correct and the credentials are set up properly."
             )
-        except PartialCredentialsError:
+        except PartialCredentialsError as e:
+            logger_config.logger.error(
+                f'Error saving drift report to {bucket_name}/{object_name}:{e}')
             raise PartialCredentialsError(
                 "Incomplete credentials. Please check your AWS configuration."
             )
         except Boto3Error as e:
+            logger_config.logger.error(
+                f'Error saving drift report to {bucket_name}/{object_name}:{e}')
             raise RuntimeError(f"An error occurred with AWS: {str(e)}")
 
 
