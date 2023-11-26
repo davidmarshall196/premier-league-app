@@ -1,28 +1,22 @@
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from botocore.client import Config
 import os
-import pickle
-from io import BytesIO
-from typing import Optional
-
+from typing import Optional, Dict, Any
 
 # import constants
 try:
-    from premier_league import (
-        constants,
-        logger_config
-    )
+    from premier_league import constants, logger_config
 except ImportError:
     import constants
     import logger_config
+
 
 def generate_email_body(
     alert_type: str,
     bucket_name: str,
     s3_object_name: str,
     url: str,
-    alert_date: str = constants.current_time
+    alert_date: str = constants.current_time,
 ) -> str:
     """
     Generate the HTML body for an email notification based on the alert type.
@@ -48,7 +42,7 @@ def generate_email_body(
       {alert} Alert
       Details:
       Date: {alert_date}
-      
+
       Please check the project logs for details
 
       {alert} report saved at s3://{bucket_name}/{s3_object_name}
@@ -58,15 +52,14 @@ def generate_email_body(
 
 
 def get_s3_client(
-    profile_name: Optional[str] = 'premier-league-app', 
-    region: str = "eu-west-2"
+    profile_name: Optional[str] = "premier-league-app", region: str = "eu-west-2"
 ) -> boto3.Session.client:
     """
-    Retrieve an S3 client instance using a specified AWS 
+    Retrieve an S3 client instance using a specified AWS
     profile name or environment variables.
 
     Parameters:
-    - profile_name (Optional[str]): The AWS profile name. 
+    - profile_name (Optional[str]): The AWS profile name.
             Defaults to 'premier-league-app'.
     - region (str): The AWS region.
 
@@ -79,15 +72,16 @@ def get_s3_client(
         session = boto3.Session(
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            region_name=region
+            region_name=region,
         )
     return session.client("s3")
+
 
 def generate_presigned_s3_url(
     bucket_name: str,
     s3_object_name: str,
     expiration: int = 3600,
-    profile_name: Optional[str] = 'premier-league-app',
+    profile_name: Optional[str] = "premier-league-app",
     region: str = "eu-west-2",
 ) -> Optional[str]:
     """
@@ -112,17 +106,16 @@ def generate_presigned_s3_url(
         )
         return url
     except Exception as e:
-        logger_config.logger.error(
-            f"Error generating presigned URL: {e}"
-        )
+        logger_config.logger.error(f"Error generating presigned URL: {e}")
         return None
 
+
 def send_sns_notification(
-    Subject: str, 
-    Message: str, 
-    Topic: str, 
-    profile_name: Optional[str] = 'premier-league-app',
-    region: str = "eu-west-2"
+    Subject: str,
+    Message: str,
+    Topic: str,
+    profile_name: Optional[str] = "premier-league-app",
+    region: str = "eu-west-2",
 ) -> Dict[str, Any]:
     """
     Send a message to a specified AWS SNS topic.
@@ -131,7 +124,8 @@ def send_sns_notification(
     - Subject (str): The subject of the message.
     - Message (str): The body of the message.
     - Topic (str): The ARN of the SNS topic.
-    - profile_name (Optional[str]): The AWS profile name. Defaults to 'premier-league-app'.
+    - profile_name (Optional[str]): The AWS profile name. Defaults to
+        'premier-league-app'.
     - region (str): The AWS region.
 
     Returns:
@@ -142,49 +136,41 @@ def send_sns_notification(
     - PartialCredentialsError: If AWS credentials are incomplete.
     """
     try:
-        session = boto3.Session(
-            profile_name=profile_name) if profile_name else boto3.Session()
-        sns = session.client('sns', region)
-
-        logger_config.logger.info(
-            f'Sending SNS message to topic {Topic}')
-
-        response = sns.publish(
-            TopicArn=Topic,
-            Subject=Subject,
-            Message=Message
+        session = (
+            boto3.Session(profile_name=profile_name)
+            if profile_name
+            else boto3.Session()
         )
-        logger_config.logger.info(
-            f'Sent SNS message to topic {Topic}')
+        sns = session.client("sns", region)
+
+        logger_config.logger.info(f"Sending SNS message to topic {Topic}")
+
+        response = sns.publish(TopicArn=Topic, Subject=Subject, Message=Message)
+        logger_config.logger.info(f"Sent SNS message to topic {Topic}")
         return response
 
     except NoCredentialsError as e:
-        logger_config.logger.error(
-            f"Error sending SNS: {e}"
-        )
+        logger_config.logger.error(f"Error sending SNS: {e}")
         raise NoCredentialsError(
             "Credentials not available. Make sure the profile "
             "name is correct and the credentials are set up properly."
         )
     except PartialCredentialsError as e:
-        logger_config.logger.error(
-            f"Error sending SNS: {e}"
-        )
+        logger_config.logger.error(f"Error sending SNS: {e}")
         raise PartialCredentialsError(
             "Incomplete credentials. Please check your AWS configuration."
         )
     except Exception as e:
-        logger_config.logger.error(
-            f"Error sending SNS: {e}"
-        )
+        logger_config.logger.error(f"Error sending SNS: {e}")
         return ["FAIL", e]
 
+
 def send_email(
-    alert_type: str, 
-    bucket_name: str, 
-    s3_object_name: str, 
-    topic: str, 
-    alert_date: str = constants.current_time
+    alert_type: str,
+    bucket_name: str,
+    s3_object_name: str,
+    topic: str,
+    alert_date: str = constants.current_time,
 ) -> dict:
     """
     Generate and send an email notification for specific alert types.
@@ -207,30 +193,13 @@ def send_email(
 
     # Generate email body
     email_body = generate_email_body(
-        alert_type, 
-        bucket_name, 
-        s3_object_name, 
-        url, 
-        alert_date
+        alert_type, bucket_name, s3_object_name, url, alert_date
     )
 
     # Define the subject based on alert type
     subject = f"{alert_type.replace('_', ' ').capitalize()} Alert"
 
     # Send SNS notification
-    response = send_sns_notification(
-        Subject=subject, 
-        Message=email_body, 
-        Topic=topic
-    )
+    response = send_sns_notification(Subject=subject, Message=email_body, Topic=topic)
 
     return response
-
-
-
-
-
-
-
-
-

@@ -1,10 +1,13 @@
-from typing import Union
+from typing import Union, List
 import subprocess
 import pytest
 
 
 def run_unit_tests(
-    test_file: str, src_folder: str, cov_folder: str = None
+    test_file: str,
+    src_folder: str,
+    cov_folder: str = None,
+    exclude_files: List[str] = [],
 ) -> Union[int, None]:
     """
     Run unit tests using pytest.
@@ -12,17 +15,14 @@ def run_unit_tests(
     Parameters:
     - test_file (str): The path to the test file to run.
     - src_folder (str): The path to the source code folder.
-    - cov_folder (str, optional): The folder to generate coverage for.
-    Defaults to None.
+    - cov_folder (str, optional): The folder to generate coverage for. Defaults to None.
+    - exclude_files (List[str], optional): List of file paths to exclude.
+    Defaults to an empty list.
 
     Returns:
     - int or None: Returns the return code of pytest, or None if an error occurred.
     """
     try:
-        # Change directory to source code folder
-        # os.chdir(f"{src_folder}")
-
-        # Set up pytest command
         pytest_command = [
             test_file,
             "-v",
@@ -32,12 +32,16 @@ def run_unit_tests(
         ]
 
         if cov_folder:
-            pytest_command.extend(["--cov=" + cov_folder, "--cov-report=term-missing"])
+            pytest_command.append(f"--cov={cov_folder}")
+            if exclude_files:
+                # Join the list of files to exclude into a string separated by commas
+                excluded_files_str = ",".join(exclude_files)
+                pytest_command.append(f"--cov-omit={excluded_files_str}")
+            pytest_command.append("--cov-report=term-missing")
 
         # Run pytest
         retcode = pytest.main(pytest_command)
 
-        # Assert to check if tests passed
         assert retcode == 0, "Tests failed. Please check."
 
         return retcode

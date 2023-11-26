@@ -3,10 +3,7 @@ import os
 
 # import constants
 try:
-    from premier_league import (
-        constants,
-        logger_config
-    )
+    from premier_league import constants, logger_config
 except ModuleNotFoundError:
     import constants
     import logger_config
@@ -28,7 +25,7 @@ def get_parameter(parameter_name):
     return response["Parameter"]["Value"]
 
 
-logger_config.logger.info('Grabbing Passwords')
+logger_config.logger.info("Grabbing Passwords")
 RDS_DB_ID = get_parameter("RDS_IDENTIFIER")
 RDS_DB_PASSWORD = get_parameter("RDS_PASSWORD")
 RDS_ENDPOINT = get_parameter("RDS_ENDPOINT")

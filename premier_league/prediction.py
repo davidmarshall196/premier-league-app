@@ -6,30 +6,30 @@ import shap
 
 # import constants
 try:
-    from premier_league import (
-        logger_config
-    )
+    from premier_league import logger_config
 except ImportError:
     import logger_config
 
-def get_top_shap(
-    df: pd.DataFrame, 
-    model, 
-    encoded_columns: list = None
-) -> tuple:
+
+def get_top_shap(df: pd.DataFrame, model, encoded_columns: list = None) -> tuple:
     """
-    Get top three SHAP (SHapley Additive exPlanations) values that influence positive class predictions.
+    Get top three SHAP (SHapley Additive exPlanations) values that influence
+    positive class predictions.
 
     Parameters:
     - df (pd.DataFrame): Data upon which to predict.
     - model: Model to predict with.
-    - encoded_columns (list, optional): Columns that have been encoded to multiple columns in the data, 
-            for example with one-hot encoding. Providing this will map the many columns back to one in the 
+    - encoded_columns (list, optional): Columns that have been encoded to
+    multiple columns in the data,
+            for example with one-hot encoding. Providing this will map the many
+            columns back to one in the
             returned top_shap_values. Defaults to None.
 
     Returns:
-    - tuple: A tuple containing the top three SHAP values for each row as columns (pd.DataFrame), 
-               SHAP explainer object (shap.TreeExplainer), and SHAP explanation object.
+    - tuple: A tuple containing the top three SHAP values for each row as
+    columns (pd.DataFrame),
+               SHAP explainer object (shap.TreeExplainer), and SHAP explanation
+               object.
     """
     shap_explainer = shap.TreeExplainer(model)
     shap_explanation = shap_explainer(df)
@@ -58,10 +58,7 @@ def get_top_shap(
     return top_shap_values, shap_explainer, shap_explanation
 
 
-def predict(
-    data: pd.DataFrame, 
-    model
-) -> list:
+def predict(data: pd.DataFrame, model) -> list:
     """
     Predicts the target variable using the provided model.
 
@@ -73,9 +70,9 @@ def predict(
     - list: The list of predicted values.
     """
     logger_config.logger.info("Making Predictions")
-    
+
     data = data[model.feature_names_]
-    if 'Regress' in str(type(model)):
+    if "Regress" in str(type(model)):
         predictions = model.predict(data)
         predictions = predictions.round().astype(int)
     else:
@@ -84,31 +81,28 @@ def predict(
     return predictions
 
 
-def add_res_prediction(
-    input_data: dict
-) -> str:
+def add_res_prediction(input_data: dict) -> str:
     """
     Adds the match result prediction based on home and away predictions.
 
     Parameters:
-    - input_data: A dictionary-like object containing 'Home Prediction' and 'Away Prediction' values.
+    - input_data: A dictionary-like object containing 'Home Prediction' and 'Away
+    Prediction' values.
 
     Returns:
-    - str: The predicted match result ('H' for home win, 'A' for away win, 'D' for draw).
+    - str: The predicted result ('H' for home win, 'A' for away win, 'D' for draw).
     """
     logger_config.logger.info("Adding result prediction")
-    if input_data['Home Prediction'] > input_data['Away Prediction']:
-        return 'H'
-    elif input_data['Home Prediction'] < input_data['Away Prediction']:
-        return 'A'
+    if input_data["Home Prediction"] > input_data["Away Prediction"]:
+        return "H"
+    elif input_data["Home Prediction"] < input_data["Away Prediction"]:
+        return "A"
     else:
-        return 'D'
+        return "D"
 
 
 def add_match_result(
-    transformed_data: pd.DataFrame, 
-    classifier, 
-    new_df: pd.DataFrame
+    transformed_data: pd.DataFrame, classifier, new_df: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Adds match prediction, FTHG, and FTAG columns to the transformed data.
@@ -116,35 +110,35 @@ def add_match_result(
     Parameters:
     - transformed_data (pd.DataFrame): The transformed data to add the columns.
     - classifier: The classifier model for match prediction.
-    - new_df (pd.DataFrame): The original data frame containing FTHG and FTAG columns.
+    - new_df (pd.DataFrame): The original data frame containing FTHG and FTAG
+    columns.
 
     Returns:
     - pd.DataFrame: The transformed data with added columns.
-    
+
     Raises:
-    - Exception: If the length of transformed_data is not equal to the length of new_df.
+    - Exception: If the length of transformed_data is not equal to the length
+    of new_df.
     """
     if len(transformed_data) == len(new_df):
-        transformed_data[
-            'match_prediction'] = predict(transformed_data, classifier)
-        transformed_data[
-            'match_prediction'] = transformed_data[
-            'match_prediction'].astype('category')
-        transformed_data['FTHG'] = new_df['FTHG']
-        transformed_data['FTAG'] = new_df['FTAG']
+        transformed_data["match_prediction"] = predict(transformed_data, classifier)
+        transformed_data["match_prediction"] = transformed_data[
+            "match_prediction"
+        ].astype("category")
+        transformed_data["FTHG"] = new_df["FTHG"]
+        transformed_data["FTAG"] = new_df["FTAG"]
         return transformed_data
     else:
-        raise Exception('Datasets are not aligned. Check.')
+        raise Exception("Datasets are not aligned. Check.")
 
 
-def load_model(
-    model_path: str
-) -> tuple:
+def load_model(model_path: str) -> tuple:
     """
     Loads a previously pickled model and transformers.
 
     Args:
-    - model_path (str): The path to the directory containing the model and transformers pickle files.
+    - model_path (str): The path to the directory containing the model
+    and transformers pickle files.
 
     Returns:
     - tuple: A tuple containing the loaded model and transformers.

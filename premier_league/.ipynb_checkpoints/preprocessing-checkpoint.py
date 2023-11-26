@@ -1,13 +1,9 @@
-
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
 from typing import Tuple
+
 try:
-    from premier_league import (
-        preprocessing_helpers,
-        logger_config
-    )
+    from premier_league import preprocessing_helpers, logger_config
 except ImportError:
     import preprocessing_helpers
     import logger_config
@@ -19,7 +15,8 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         Initialize the CustomTransformer.
 
         Parameters:
-        - dtypes (list, optional): Data types to be selected for transformation. Defaults to [object, 'category'].
+        - dtypes (list, optional): Data types to be selected for
+        transformation. Defaults to [object, 'category'].
 
         Attributes:
         - input_columns (list): Columns of the input data to be transformed.
@@ -28,7 +25,7 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         self.input_columns = None
         self.final_columns = None
         if dtypes is None:
-            dtypes = [object, 'category']
+            dtypes = [object, "category"]
         self.dtypes = dtypes
 
     def fit(self, X: pd.DataFrame, y=None, **kwargs) -> "CustomTransformer":
@@ -86,10 +83,10 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         """
         return tuple(self.final_columns)
 
-def fit_transformers(
-    x_train: pd.DataFrame
-):
-    """Fit an sklearn ColumnTransformer on the data and return it with the tranformed data.
+
+def fit_transformers(x_train: pd.DataFrame):
+    """Fit an sklearn ColumnTransformer on the data and return it
+    with the tranformed data.
 
     Parameters:
     - x_train (pandas.DataFrame): Data upon which to train.
@@ -98,12 +95,13 @@ def fit_transformers(
     - (sklearn.compose.ColumnTransformer): Transformed data and fitted transformer.
     """
     logger_config.logger.info("Fitting Transformer")
-    transformers = CustomTransformer() 
+    transformers = CustomTransformer()
     x_train = transformers.fit(x_train)
     return transformers
 
+
 def transform_data(
-    data: pd.DataFrame, 
+    data: pd.DataFrame,
     transformer,
 ) -> pd.DataFrame:
     """Transform data using provided transformer.
@@ -116,16 +114,13 @@ def transform_data(
     - transformed_data (pandas.DataFrame): Transformed data.
     """
     logger_config.logger.info("Transforming Data")
-    transformed_data = transformer.transform(
-        data
-    )
-    
+    transformed_data = transformer.transform(data)
+
     return transformed_data
 
 
 def split_data(
-    data: pd.DataFrame, 
-    train_ratio: float = 0.8
+    data: pd.DataFrame, train_ratio: float = 0.8
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Split passed data into training and testing datasets.
 
@@ -142,25 +137,3 @@ def split_data(
     test_data = data[~data.isin(train_data)].dropna().reset_index(drop=True)
     train_data = train_data.reset_index(drop=True)
     return train_data, test_data
-
-
-def validate_data(
-        data: pd.DataFrame, 
-        data_expectations: dict
-    ) -> dict:
-    """Validate data using predifined Great Expectations suite
-    
-    Parameters:
-    - data (pandas.DataFrame): Data to validate.
-    - data_expectations (dict): Expectations used for the validation.
-
-    Returns:
-    - (dict): Validation results.
-    """
-    logger_config.logger.info("Validating Data")
-    data = ge.from_pandas(data, expectation_suite=data_expectations)
-    validation_results = data.validate()
-    return validation_results.to_json_dict()
-
-
-
