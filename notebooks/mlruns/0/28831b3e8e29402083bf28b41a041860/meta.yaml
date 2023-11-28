@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/david%40inawisdom.com/Documents/Training/premier_league/notebooks/mlruns/0/28831b3e8e29402083bf28b41a041860/artifacts
+end_time: 1701160849874
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 28831b3e8e29402083bf28b41a041860
+run_name: sedate-deer-946
+run_uuid: 28831b3e8e29402083bf28b41a041860
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701160798260
+status: 3
+tags: []
+user_id: david@inawisdom.com

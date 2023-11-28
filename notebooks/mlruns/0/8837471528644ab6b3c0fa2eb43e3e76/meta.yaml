@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/david%40inawisdom.com/Documents/Training/premier_league/notebooks/mlruns/0/8837471528644ab6b3c0fa2eb43e3e76/artifacts
+end_time: 1701161176083
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 8837471528644ab6b3c0fa2eb43e3e76
+run_name: dashing-sloth-368
+run_uuid: 8837471528644ab6b3c0fa2eb43e3e76
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1701160854739
+status: 3
+tags: []
+user_id: david@inawisdom.com

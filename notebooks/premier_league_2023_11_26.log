@@ -246,3 +246,41 @@
 2023-11-26 16:31:59,800 - PremierLeagueLogger - INFO - Counts:
 2023-11-26 16:32:01,723 - PremierLeagueLogger - INFO - expect_column_values_to_be_in_set: 1
 2023-11-26 16:32:03,084 - PremierLeagueLogger - INFO - expect_column_values_to_be_in_set: 1
+2023-11-27 08:03:43,098 - PremierLeagueLogger - INFO - Saving drift report to premier-league-app/Mock Object Name
+2023-11-27 08:03:45,624 - PremierLeagueLogger - INFO - Saved drift report to premier-league-app/Mock Object Name
+2023-11-27 08:03:46,962 - PremierLeagueLogger - INFO - Saving drift report to premier-league-app/Mock Object Name
+2023-11-27 08:03:48,831 - PremierLeagueLogger - INFO - Saved drift report to premier-league-app/Mock Object Name
+2023-11-27 08:03:50,117 - PremierLeagueLogger - INFO - Adding min/max expecations to column int_col
+2023-11-27 08:03:51,382 - PremierLeagueLogger - INFO - Adding categorical expecations to column str_col
+2023-11-27 08:03:52,633 - PremierLeagueLogger - INFO - Adding missing expectations to column str_col
+2023-11-27 08:03:53,896 - PremierLeagueLogger - INFO - Adding categorical expecations to column str_col
+2023-11-27 08:03:55,156 - PremierLeagueLogger - INFO - Adding missing expectations to column int_col
+2023-11-27 08:03:56,420 - PremierLeagueLogger - INFO - Adding min/max expecations to column int_col
+2023-11-27 08:03:57,659 - PremierLeagueLogger - INFO - Adding missing expectations to column miss_col
+2023-11-27 08:03:58,966 - PremierLeagueLogger - INFO - Adding min/max expecations to column miss_col
+2023-11-27 08:04:00,238 - PremierLeagueLogger - INFO - Adding categorical expecations to column str_col
+2023-11-27 08:04:01,630 - PremierLeagueLogger - INFO - Data GE object type: <class 'great_expectations.dataset.pandas_dataset.PandasDataset'>
+2023-11-27 08:04:02,928 - PremierLeagueLogger - INFO - Adding categorical expecations to column str_col
+2023-11-27 08:04:04,183 - PremierLeagueLogger - INFO - Total Expectations: 1
+2023-11-27 08:04:05,462 - PremierLeagueLogger - INFO - Counts:
+2023-11-27 08:04:06,710 - PremierLeagueLogger - INFO - expect_column_values_to_be_in_set: 1
+2023-11-27 08:04:07,965 - PremierLeagueLogger - INFO - expect_column_values_to_be_in_set: 1
+2023-11-27 08:18:25,006 - PremierLeagueLogger - INFO - Saving drift report to premier-league-app/Mock Object Name
+2023-11-27 08:18:27,379 - PremierLeagueLogger - INFO - Saved drift report to premier-league-app/Mock Object Name
+2023-11-27 08:18:28,750 - PremierLeagueLogger - INFO - Saving drift report to premier-league-app/Mock Object Name
+2023-11-27 08:18:30,658 - PremierLeagueLogger - INFO - Saved drift report to premier-league-app/Mock Object Name
+2023-11-27 08:18:31,983 - PremierLeagueLogger - INFO - Adding min/max expecations to column int_col
+2023-11-27 08:18:33,275 - PremierLeagueLogger - INFO - Adding categorical expecations to column str_col
+2023-11-27 08:18:34,554 - PremierLeagueLogger - INFO - Adding missing expectations to column str_col
+2023-11-27 08:18:35,833 - PremierLeagueLogger - INFO - Adding categorical expecations to column str_col
+2023-11-27 08:18:37,111 - PremierLeagueLogger - INFO - Adding missing expectations to column int_col
+2023-11-27 08:18:38,392 - PremierLeagueLogger - INFO - Adding min/max expecations to column int_col
+2023-11-27 08:18:39,645 - PremierLeagueLogger - INFO - Adding missing expectations to column miss_col
+2023-11-27 08:18:40,914 - PremierLeagueLogger - INFO - Adding min/max expecations to column miss_col
+2023-11-27 08:18:42,233 - PremierLeagueLogger - INFO - Adding categorical expecations to column str_col
+2023-11-27 08:18:43,676 - PremierLeagueLogger - INFO - Data GE object type: <class 'great_expectations.dataset.pandas_dataset.PandasDataset'>
+2023-11-27 08:18:45,361 - PremierLeagueLogger - INFO - Adding categorical expecations to column str_col
+2023-11-27 08:18:46,644 - PremierLeagueLogger - INFO - Total Expectations: 1
+2023-11-27 08:18:47,929 - PremierLeagueLogger - INFO - Counts:
+2023-11-27 08:18:49,215 - PremierLeagueLogger - INFO - expect_column_values_to_be_in_set: 1
+2023-11-27 08:18:50,513 - PremierLeagueLogger - INFO - expect_column_values_to_be_in_set: 1

@@ -190,10 +190,6 @@ def replace_team_names(
     Returns:
     - pd.DataFrame: The DataFrame with team names replaced in the
     specified column.
-
-    Notes:
-    - This function is useful for standardizing team names across
-    different datasets.
     """
     input_data[column] = input_data[column].replace(replace_map)
     return input_data
