@@ -11,7 +11,7 @@ import pickle
 from datetime import datetime
 import streamlit as st
 import json
-import os
+
 # import constants
 try:
     from premier_league import constants, logger_config

@@ -92,7 +92,6 @@ def add_res_prediction(input_data: dict) -> str:
     Returns:
     - str: The predicted result ('H' for home win, 'A' for away win, 'D' for draw).
     """
-    logger_config.logger.info("Adding result prediction")
     if input_data["Home Prediction"] > input_data["Away Prediction"]:
         return "H"
     elif input_data["Home Prediction"] < input_data["Away Prediction"]:

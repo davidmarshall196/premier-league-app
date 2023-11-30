@@ -2,7 +2,6 @@ import boto3
 from botocore.exceptions import ClientError
 from typing import Optional
 import time
-from unittest.mock import patch, MagicMock
 
 # import constants
 try:
@@ -172,13 +171,3 @@ def stop_rds_instance(
     except ClientError as e:
         logger_config.logger.error(f"Error stopping RDS instance: {e}")
         raise
-
-
-
-
-
-
-
-
-
-

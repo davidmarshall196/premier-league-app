@@ -1,2 +1,0 @@
-2023-11-29 07:36:23,898 - PremierLeagueLogger - INFO - Grabbing Passwords
-2023-11-29 08:02:29,256 - PremierLeagueLogger - ERROR - Error starting RDS instance: An error occurred (DBInstanceNotFound) when calling the StartDBInstance operation: DBInstance test-instance not found.

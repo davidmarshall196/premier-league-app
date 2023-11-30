@@ -1,0 +1,48 @@
+2023-11-30 08:15:41,121 - PremierLeagueLogger - INFO - Streamlit: app starting
+2023-11-30 08:15:42,914 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/transformed_data_predictions.csv
+2023-11-30 08:15:46,338 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/transformed_data_predictions.csv
+2023-11-30 08:15:47,935 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/stadiums-with-GPS-coordinates.csv
+2023-11-30 08:15:50,146 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/stadiums-with-GPS-coordinates.csv
+2023-11-30 08:15:51,810 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/model_performance/model_performance_data.csv
+2023-11-30 08:15:54,576 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/model_performance/model_performance_data.csv
+2023-11-30 08:15:56,498 - PremierLeagueLogger - INFO - Grabbing transformer from premier-league-app/app_data/models/home_regress_model_v2_20231130.pkl
+2023-11-30 08:16:01,841 - PremierLeagueLogger - INFO - Loaded transformer from premier-league-app/app_data/models/home_regress_model_v2_20231130.pkl
+2023-11-30 08:16:03,339 - PremierLeagueLogger - INFO - Grabbing transformer from premier-league-app/app_data/models/away_regress_model_v2_20231130.pkl
+2023-11-30 08:16:06,639 - PremierLeagueLogger - INFO - Loaded transformer from premier-league-app/app_data/models/away_regress_model_v2_20231130.pkl
+2023-11-30 08:16:08,146 - PremierLeagueLogger - INFO - Attempting to read from https://fixturedownload.com/download/epl-2023-UTC.csv
+2023-11-30 08:16:39,572 - PremierLeagueLogger - INFO - Loading image from premier-league-app/app_data/badges/Arsenal.png
+2023-11-30 08:16:42,362 - PremierLeagueLogger - INFO - Loaded image from premier-league-app/app_data/badges/Arsenal.png
+2023-11-30 08:16:44,009 - PremierLeagueLogger - INFO - Loading image from premier-league-app/app_data/badges/Wolves.png
+2023-11-30 08:16:46,710 - PremierLeagueLogger - INFO - Loaded image from premier-league-app/app_data/badges/Wolves.png
+2023-11-30 08:43:10,503 - PremierLeagueLogger - INFO - Streamlit: app starting
+2023-11-30 08:43:12,803 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/transformed_data_predictions.csv
+2023-11-30 08:43:16,923 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/transformed_data_predictions.csv
+2023-11-30 08:43:18,777 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/stadiums-with-GPS-coordinates.csv
+2023-11-30 08:43:21,366 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/stadiums-with-GPS-coordinates.csv
+2023-11-30 08:43:23,427 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/model_performance/model_performance_data.csv
+2023-11-30 08:43:26,253 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/model_performance/model_performance_data.csv
+2023-11-30 08:43:28,115 - PremierLeagueLogger - INFO - Grabbing transformer from premier-league-app/app_data/models/home_regress_model_v2_20231130.pkl
+2023-11-30 08:43:33,906 - PremierLeagueLogger - INFO - Loaded transformer from premier-league-app/app_data/models/home_regress_model_v2_20231130.pkl
+2023-11-30 08:43:35,759 - PremierLeagueLogger - INFO - Grabbing transformer from premier-league-app/app_data/models/away_regress_model_v2_20231130.pkl
+2023-11-30 08:43:39,482 - PremierLeagueLogger - INFO - Loaded transformer from premier-league-app/app_data/models/away_regress_model_v2_20231130.pkl
+2023-11-30 08:43:41,540 - PremierLeagueLogger - INFO - Attempting to read from https://fixturedownload.com/download/epl-2023-UTC.csv
+2023-11-30 08:44:20,636 - PremierLeagueLogger - INFO - Loading image from premier-league-app/app_data/badges/Arsenal.png
+2023-11-30 08:44:23,966 - PremierLeagueLogger - INFO - Loaded image from premier-league-app/app_data/badges/Arsenal.png
+2023-11-30 08:44:25,952 - PremierLeagueLogger - INFO - Loading image from premier-league-app/app_data/badges/Wolves.png
+2023-11-30 08:44:28,860 - PremierLeagueLogger - INFO - Loaded image from premier-league-app/app_data/badges/Wolves.png
+2023-11-30 08:47:06,054 - PremierLeagueLogger - INFO - Streamlit: app starting
+2023-11-30 08:47:08,282 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/transformed_data_predictions.csv
+2023-11-30 08:47:12,044 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/transformed_data_predictions.csv
+2023-11-30 08:47:14,646 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/stadiums-with-GPS-coordinates.csv
+2023-11-30 08:47:17,246 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/stadiums-with-GPS-coordinates.csv
+2023-11-30 08:47:19,157 - PremierLeagueLogger - INFO - Loading data from premier-league-app/app_data/model_performance/model_performance_data.csv
+2023-11-30 08:47:21,990 - PremierLeagueLogger - INFO - Successfully loaded data from premier-league-app/app_data/model_performance/model_performance_data.csv
+2023-11-30 08:47:23,837 - PremierLeagueLogger - INFO - Grabbing transformer from premier-league-app/app_data/models/home_regress_model_v2_20231130.pkl
+2023-11-30 08:47:33,763 - PremierLeagueLogger - INFO - Loaded transformer from premier-league-app/app_data/models/home_regress_model_v2_20231130.pkl
+2023-11-30 08:47:35,964 - PremierLeagueLogger - INFO - Grabbing transformer from premier-league-app/app_data/models/away_regress_model_v2_20231130.pkl
+2023-11-30 08:47:39,620 - PremierLeagueLogger - INFO - Loaded transformer from premier-league-app/app_data/models/away_regress_model_v2_20231130.pkl
+2023-11-30 08:47:41,481 - PremierLeagueLogger - INFO - Attempting to read from https://fixturedownload.com/download/epl-2023-UTC.csv
+2023-11-30 08:48:11,986 - PremierLeagueLogger - INFO - Loading image from premier-league-app/app_data/badges/Arsenal.png
+2023-11-30 08:48:15,305 - PremierLeagueLogger - INFO - Loaded image from premier-league-app/app_data/badges/Arsenal.png
+2023-11-30 08:48:17,234 - PremierLeagueLogger - INFO - Loading image from premier-league-app/app_data/badges/Wolves.png
+2023-11-30 08:48:20,263 - PremierLeagueLogger - INFO - Loaded image from premier-league-app/app_data/badges/Wolves.png
