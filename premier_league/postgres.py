@@ -12,7 +12,8 @@ except ImportError:
 
 
 def get_instance_status(
-    instance_identifier: str, profile_name: Optional[str] = "premier-league-app"
+    instance_identifier: str, 
+    profile_name: Optional[str] = "premier-league-app"
 ) -> str:
     """
     Get the current status of an RDS instance.
@@ -27,9 +28,16 @@ def get_instance_status(
     try:
         if constants.LOCAL_MODE:
             session = boto3.Session(profile_name=profile_name)
-            client = session.client("rds")
+        else:
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name="eu-west-2",
+            )
+        client = session.client("rds")
 
-        logger_config.logger.info(f"Grabbing instance status of {instance_identifier}")
+        logger_config.logger.info(
+            f"Grabbing instance status of {instance_identifier}")
         response = client.describe_db_instances(
             DBInstanceIdentifier=instance_identifier
         )

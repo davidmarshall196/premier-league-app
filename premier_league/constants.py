@@ -47,7 +47,7 @@ HOME_MODEL_NAME = (
 AWAY_MODEL_NAME = (
     f"app_data/models/away_regress_model_{MODEL_VERSION}_{current_time}.pkl"
 )
-MAX_EVALS = 20
+MAX_EVALS = 2
 
 # Names
 TEAM_NAME_REPLACEMENTS = {

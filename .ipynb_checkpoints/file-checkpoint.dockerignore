@@ -1,0 +1,11 @@
+.git
+.gitignore
+.ipynb_checkpoints
+.pre-commit-config.yaml
+.pytest_cache
+.virtual_documents
+env_premier_league
+notebooks
+tests
+*.pyc
+__pycache__

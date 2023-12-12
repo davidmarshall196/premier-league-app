@@ -42,7 +42,7 @@ class DriftDetector:
         self,
         object_name: str,
         bucket_name: str = constants.S3_BUCKET,
-        profile_name: Optional[str] = "premier-league-app",
+        profile_name: Optional[str] = 'premier-league-app',
     ) -> Dict[str, Any]:
         """
         Create a data drift report and save it directly to S3.
@@ -58,7 +58,7 @@ class DriftDetector:
         """
         try:
             # Setup AWS session
-            if profile_name:
+            if constants.LOCAL_MODE:
                 session = boto3.Session(profile_name=profile_name)
             else:
                 session = boto3.Session(

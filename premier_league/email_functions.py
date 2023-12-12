@@ -66,7 +66,7 @@ def get_s3_client(
     Returns:
     - boto3.Session.client: An S3 client object.
     """
-    if profile_name:
+    if constants.LOCAL_MODE:
         session = boto3.Session(profile_name=profile_name)
     else:
         session = boto3.Session(

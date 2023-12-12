@@ -16,21 +16,15 @@ log_file_name = datetime.now().strftime("premier_league_%Y_%m_%d.log")
 logger = logging.getLogger("PremierLeagueLogger")
 logger.setLevel(logging.INFO)  # Set to your preferred logging level
 
-# Create a file handler that logs even debug messages
-fh = logging.FileHandler(log_file_name, mode="a")
-fh.setLevel(logging.INFO)
-
 # Create a console handler
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 
 # Create a formatter and set it for the handlers
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-fh.setFormatter(formatter)
 ch.setFormatter(formatter)
 
-# Add the handlers to the logger
-logger.addHandler(fh)
+# Add the console handler to the logger
 logger.addHandler(ch)
 
 

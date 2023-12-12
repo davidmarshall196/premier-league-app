@@ -123,7 +123,7 @@ def save_data_s3(
     - PartialCredentialsError: If AWS credentials are incomplete.
     """
     try:
-        if profile_name:
+        if constants.LOCAL_MODE:
             # Use the specified profile
             session = boto3.Session(profile_name=profile_name)
         else:
@@ -197,7 +197,7 @@ def save_transformer_s3_pickle(
     """
     try:
         # The profile name is optional and used for local development
-        if profile_name:
+        if constants.LOCAL_MODE:
             session = boto3.Session(profile_name=profile_name)
         else:
             # Use environment variables for AWS credentials
@@ -309,13 +309,13 @@ def load_transformer_s3_pickle(
     """
     try:
         # Session setup
-        if profile_name:
+        if constants.LOCAL_MODE:
             session = boto3.Session(profile_name=profile_name)
         else:
             session = boto3.Session(
                 aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
                 aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-                region_name="eu-west-2",  # or your AWS region
+                region_name="eu-west-2",
             )
 
         # Get the latest model file
@@ -379,7 +379,7 @@ def load_and_display_image_from_s3(
     """
     try:
         # The profile name is optional and used for local development
-        if profile_name:
+        if constants.LOCAL_MODE:
             session = boto3.Session(profile_name=profile_name)
         else:
             # Use environment variables for AWS credentials
