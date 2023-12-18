@@ -5,7 +5,7 @@ current_time = datetime.now().strftime("%Y%m%d")
 
 # Reload all data?
 INITIAL_DATA_LOAD = False
-LOCAL_MODE = True
+LOCAL_MODE = False
 
 # Column names
 COLUMNS_REQ = ["season", "Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"]
