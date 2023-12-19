@@ -271,8 +271,12 @@ def get_latest_model_file(bucket: str, prefix: str, session: boto3.Session) -> s
 
     for obj in response.get("Contents", []):
         filename = obj["Key"]
-        file_date_str = filename.split("_")[-1].split(".")[0]
-        file_date = datetime.strptime(file_date_str, "%Y%m%d")
+        try:
+            file_date_str = filename.split("_")[-1].split(".")[0]
+            file_date = datetime.strptime(file_date_str, "%Y%m%d")
+        except ValueError:
+            # Skip if the date is not in the expected format
+            continue
 
         if not latest_date or file_date > latest_date:
             latest_date = file_date
