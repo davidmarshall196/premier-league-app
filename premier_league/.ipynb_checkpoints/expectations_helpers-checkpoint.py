@@ -391,14 +391,13 @@ def latest_exp_file(
 ):
     try:
         # The profile name is optional and used for local development
-        if profile_name:
+        if constants.LOCAL_MODE:
             session = boto3.Session(profile_name=profile_name)
         else:
-            # Use environment variables for AWS credentials
             session = boto3.Session(
                 aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
                 aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-                region_name="eu-west-2",  # or your AWS region
+                region_name="eu-west-2",
             )
         s3_client = session.client("s3")
         response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
@@ -444,14 +443,13 @@ def load_latest_expectations(
     """
     try:
         # The profile name is optional and used for local development
-        if profile_name:
+        if constants.LOCAL_MODE:
             session = boto3.Session(profile_name=profile_name)
         else:
-            # Use environment variables for AWS credentials
             session = boto3.Session(
                 aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
                 aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-                region_name="eu-west-2",  # or your AWS region
+                region_name="eu-west-2",
             )
         s3_client = session.resource("s3")
         logger_config.logger.info(
