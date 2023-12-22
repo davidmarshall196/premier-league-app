@@ -163,6 +163,7 @@ def add_new_data(
         full_data_remove = pd.concat([full_data_remove, new_data])
         full_data_remove = full_data_remove.drop_duplicates()
         full_data_remove = full_data_remove.dropna()
+        full_data_remove = full_data_remove.reset_index(drop=True)
         s3_helpers.save_data_s3(full_data_remove, save_loc)
         logger_config.logger.info(f"Data saved at {save_loc}")
         return full_data_remove
@@ -190,10 +191,6 @@ def replace_team_names(
     Returns:
     - pd.DataFrame: The DataFrame with team names replaced in the
     specified column.
-
-    Notes:
-    - This function is useful for standardizing team names across
-    different datasets.
     """
     input_data[column] = input_data[column].replace(replace_map)
     return input_data

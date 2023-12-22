@@ -2,6 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 from typing import Optional
 import time
+import os
 
 # import constants
 try:
@@ -12,8 +13,7 @@ except ImportError:
 
 
 def get_instance_status(
-    instance_identifier: str, 
-    profile_name: Optional[str] = "premier-league-app"
+    instance_identifier: str, profile_name: Optional[str] = "premier-league-app"
 ) -> str:
     """
     Get the current status of an RDS instance.
@@ -36,8 +36,7 @@ def get_instance_status(
             )
         client = session.client("rds")
 
-        logger_config.logger.info(
-            f"Grabbing instance status of {instance_identifier}")
+        logger_config.logger.info(f"Grabbing instance status of {instance_identifier}")
         response = client.describe_db_instances(
             DBInstanceIdentifier=instance_identifier
         )

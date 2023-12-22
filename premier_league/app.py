@@ -23,12 +23,12 @@ model_performance = s3_helpers.grab_data_s3(constants.MODEL_PERFORMANCE_LOCATION
 
 # Home Team
 regressor1 = s3_helpers.load_transformer_s3_pickle(
-    constants.HOME_MODEL_NAME, is_transformer=False
+    constants.HOME_MODEL_PREFIX, is_transformer=False
 )
 
 # Away Team
 regressor2 = s3_helpers.load_transformer_s3_pickle(
-    constants.AWAY_MODEL_NAME, is_transformer=False
+    constants.AWAY_MODEL_PREFIX, is_transformer=False
 )
 
 # Extract current fixtures
@@ -222,3 +222,18 @@ with col2:
                 ),
             )
         )
+
+# Embedding the JavaScript
+keep_alive_script = """
+<script>
+function keepAlive(){
+    fetch("/"); // Replace with a lightweight endpoint if necessary
+    console.log("Keep-alive ping sent");
+}
+
+// Ping every 5 minutes (30000000 milliseconds)
+setInterval(keepAlive, 30000000);
+</script>
+"""
+
+st.markdown(keep_alive_script, unsafe_allow_html=True)

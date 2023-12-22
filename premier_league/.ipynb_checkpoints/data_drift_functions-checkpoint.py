@@ -42,7 +42,7 @@ class DriftDetector:
         self,
         object_name: str,
         bucket_name: str = constants.S3_BUCKET,
-        profile_name: Optional[str] = 'premier-league-app',
+        profile_name: Optional[str] = "premier-league-app",
     ) -> Dict[str, Any]:
         """
         Create a data drift report and save it directly to S3.

@@ -40,14 +40,17 @@ MODEL_VERSION = "v2"
 TRANSFORMER_PATH = (
     f"app_data/transformers/transformer_{MODEL_VERSION}_{current_time}.pkl"
 )
+CLASS_MODEL_PREFIX = f"app_data/models/classifier_{MODEL_VERSION}"
 CLASS_MODEL_NAME = f"app_data/models/classifier_{MODEL_VERSION}_{current_time}.pkl"
+HOME_MODEL_PREFIX = f"app_data/models/home_regress_model_{MODEL_VERSION}"
 HOME_MODEL_NAME = (
     f"app_data/models/home_regress_model_{MODEL_VERSION}_{current_time}.pkl"
 )
+AWAY_MODEL_PREFIX = f"app_data/models/away_regress_model_{MODEL_VERSION}"
 AWAY_MODEL_NAME = (
     f"app_data/models/away_regress_model_{MODEL_VERSION}_{current_time}.pkl"
 )
-MAX_EVALS = 2
+MAX_EVALS = 30
 
 # Names
 TEAM_NAME_REPLACEMENTS = {
