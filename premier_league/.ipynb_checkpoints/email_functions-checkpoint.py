@@ -136,11 +136,14 @@ def send_sns_notification(
     - PartialCredentialsError: If AWS credentials are incomplete.
     """
     try:
-        session = (
-            boto3.Session(profile_name=profile_name)
-            if profile_name
-            else boto3.Session()
-        )
+        if constants.LOCAL_MODE:
+            session = boto3.Session(profile_name=profile_name)
+        else:
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name=region,
+            )
         sns = session.client("sns", region)
 
         logger_config.logger.info(f"Sending SNS message to topic {Topic}")
