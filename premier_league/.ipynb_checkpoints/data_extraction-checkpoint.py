@@ -283,7 +283,7 @@ def extract_current_fixtures(transformed_data: pd.DataFrame) -> Optional[pd.Data
             current_fixtures["Date"].str.slice(0, 10), format="%d/%m/%Y"
         )
         current_fixtures["Fixture Time"] = (
-            current_fixtures["Date"].str.slice(11, 13).astype(int) + 1
+            current_fixtures["Date"].str.slice(11, 13).astype(int)
         ).astype(str) + current_fixtures["Date"].str.slice(13, 16)
         c_date = pd.to_datetime(
             datetime.datetime.now().strftime("%Y-%m-%d"), format="%Y-%m-%d"
