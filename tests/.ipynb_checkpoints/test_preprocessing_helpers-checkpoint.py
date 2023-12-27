@@ -2,19 +2,34 @@ import pandas as pd
 import numpy as np
 import pytest
 import sys
-sys.path.append('../src')
-from preprocessing_helpers import (
-    get_goals_scored, 
-    get_goals_conceded, 
-    get_gss, 
-    get_points, 
-    get_cuml_points, 
-    get_matchres,
-    get_agg_points,
-    get_form,
-    add_form,
-    add_form_df
-)
+
+try:
+    from premier_league.preprocessing_helpers import (
+        get_goals_scored, 
+        get_goals_conceded, 
+        get_gss, 
+        get_points, 
+        get_cuml_points, 
+        get_matchres,
+        get_agg_points,
+        get_form,
+        add_form,
+        add_form_df
+    )
+except ImportError:
+    sys.path.append('../')
+    from preprocessing_helpers import (
+        get_goals_scored, 
+        get_goals_conceded, 
+        get_gss, 
+        get_points, 
+        get_cuml_points, 
+        get_matchres,
+        get_agg_points,
+        get_form,
+        add_form,
+        add_form_df
+    )
 
 @pytest.fixture
 def example_playing_stat():

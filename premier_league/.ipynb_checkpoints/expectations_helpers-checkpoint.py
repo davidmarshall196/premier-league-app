@@ -1,8 +1,19 @@
 """Functions to help with Great Expectations."""
 import json
-
+import os
 import great_expectations as ge
 import pandas as pd
+from typing import Optional
+import boto3
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from datetime import datetime
+
+# import constants
+try:
+    from premier_league import constants, logger_config
+except ImportError:
+    import constants
+    import logger_config
 
 
 class AutoGreatExpectations:
@@ -85,12 +96,9 @@ class AutoGreatExpectations:
         val = self.data[col].max() + col_diff
         return val
 
-    def _add_max_min_expectations(self, 
-                                  ge_object, 
-                                  col, 
-                                  min_buffer, 
-                                  max_buffer,
-                                  verbose=True):
+    def _add_max_min_expectations(
+        self, ge_object, col, min_buffer, max_buffer, verbose=True
+    ):
         """Add the minimum and maximum value expectations.
 
         Args:
@@ -117,7 +125,7 @@ class AutoGreatExpectations:
             )
         ) and self.data[col].notnull().sum() > 0:
             if verbose:
-                print(f"Adding min/max expecations to column {col}")
+                logger_config.logger.info(f"Adding min/max expecations to column {col}")
             ge_object.expect_column_values_to_be_between(
                 col,
                 min_value=self._min_value(col, min_buffer=min_buffer),
@@ -145,7 +153,9 @@ class AutoGreatExpectations:
             and len(self.data[col].value_counts()) <= thresh
         ):
             if verbose:
-                print(f"Adding categorical expecations to column {col}")
+                logger_config.logger.info(
+                    f"Adding categorical expecations to column {col}"
+                )
             str_list = list(self.data[col].unique())
             ge_object.expect_column_values_to_be_in_set(col, value_set=str_list)
         if (
@@ -163,7 +173,9 @@ class AutoGreatExpectations:
             )
         ) and sorted(self.data[col].unique()) == [0, 1]:
             if verbose:
-                print(f"Adding categorical expecations to column {col}")
+                logger_config.logger.info(
+                    f"Adding categorical expecations to column {col}"
+                )
             ge_object.expect_column_values_to_be_in_set(col, value_set=[0, 1])
         return ge_object
 
@@ -178,7 +190,7 @@ class AutoGreatExpectations:
         min_buffer: int = 10,
         max_buffer: int = 10,
         categorical_threshold: int = 10,
-        verbose: bool = True
+        verbose: bool = True,
     ):
         """Create Great expectations object using input functions.
 
@@ -219,51 +231,100 @@ class AutoGreatExpectations:
                 data_ge.expect_column_values_to_be_of_type(col, self._column_type(col))
             if expect_missing:
                 if verbose:
-                    print(f"Adding missing expectations to column {col}")
+                    logger_config.logger.info(
+                        f"Adding missing expectations to column {col}"
+                    )
                 data_ge.expect_column_values_to_be_null(
                     col, self._missing_fraction(col, buffer=self.missing_buffer)
                 )
             if expect_min_max:
                 data_ge = self._add_max_min_expectations(
-                    data_ge, col, min_buffer=self.min_buffer, 
+                    data_ge,
+                    col,
+                    min_buffer=self.min_buffer,
                     max_buffer=self.max_buffer,
-                    verbose=verbose
+                    verbose=verbose,
                 )
             if expect_cat_vars:
                 data_ge = self._add_cat_expectations(
-                    data_ge, 
-                    col, 
-                    thresh=self.categorical_threshold,
-                    verbose=verbose
+                    data_ge, col, thresh=self.categorical_threshold, verbose=verbose
                 )
         print("Done")
         self.data_ge = data_ge
         return self.data_ge
 
 
-def save_expectations(data_ge, expectations_path):
-    """Save expectations locally as a json file.
+def save_expectations(
+    data_ge,
+    expectations_path: str,
+    bucket: str = constants.S3_BUCKET,
+    validation_results: bool = False,
+    profile_name: Optional[str] = "premier-league-app",
+):
+    """Save expectations locally or to s3.
 
     Args:
         data_ge (expectations object): A Great Expectations object
         from the Great Expectations library.
         expectations_path (string): Full path of the saved file.
+        save_to_s3: Whether to save the file to an S3 Bucket.
+        s3_bucket: S3 bucket to save file to.
 
     Returns:
         None.
     """
-    with open(expectations_path, "w") as expectations_file:
-        expectations_file.write(
-            json.dumps(
-                data_ge.get_expectation_suite(
-                    discard_failed_expectations=False
-                ).to_json_dict()
-            )
+    if not validation_results:
+        json_file = json.dumps(
+            data_ge.get_expectation_suite(
+                discard_failed_expectations=False
+            ).to_json_dict()
         )
-    print(f"Expectations saved at {expectations_path}")
+    else:
+        json_file = json.dumps(data_ge.to_json_dict())
+    if bucket:
+        try:
+            if constants.LOCAL_MODE:
+                session = boto3.Session(profile_name=profile_name)
+            else:
+                session = boto3.Session(
+                    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                    region_name="eu-west-2",
+                )
+        except NoCredentialsError as e:
+            logger_config.logger.error(
+                f"An error occurred reading {bucket}/{expectations_path}: %s", str(e)
+            )
+            raise NoCredentialsError(
+                """Credentials not available. Make sure the profile
+                name is correct and the credentials are set up properly."""
+            )
+        except PartialCredentialsError as e:
+            logger_config.logger.error(
+                f"An error occurred reading {bucket}/{expectations_path}: %s", str(e)
+            )
+            raise PartialCredentialsError(
+                "Incomplete credentials. Please check your AWS configuration."
+            )
+        except Exception as e:
+            logger_config.logger.error(
+                f"An error occurred reading {bucket}/{expectations_path}: %s", str(e)
+            )
+            raise Exception(f"An unexpected error occurred: {str(e)}")
+        logger_config.logger.info(
+            f"Saving expectations to {bucket}/{expectations_path}"
+        )
+        s3 = session.client("s3")  # Create a connection to S3
+        s3.put_object(Body=json_file, Bucket=bucket, Key=expectations_path)
+        logger_config.logger.info(f"Saved expectations to {bucket}/{expectations_path}")
+    else:
+        with open(expectations_path, "w") as expectations_file:
+            expectations_file.write(json_file)
 
 
-def validate_data(data: pd.DataFrame, data_expectations: dict) -> dict:
+def validate_data(
+    data: pd.DataFrame, data_expectations: dict, expectations_path: str
+) -> dict:
     """Provide a summary of the validation results.
 
     Args:
@@ -277,14 +338,21 @@ def validate_data(data: pd.DataFrame, data_expectations: dict) -> dict:
     data = ge.from_pandas(data, expectation_suite=data_expectations)
     validation_results = data.validate()
     if validation_results["success"]:
-        print(validation_results["statistics"])
+        logger_config.logger.info(validation_results["statistics"])
     else:
-        print("Validated:", validation_results["success"])
-        print(validation_results["statistics"])
+        logger_config.logger.error(f"Validated: {validation_results['success']}")
+        logger_config.logger.error(validation_results["statistics"])
         for result in validation_results["results"]:
             if not result["success"]:
-                print(result)
+                logger_config.logger.error(result)
         raise Exception("Data does not meet expectations!")
+    save_expectations(
+        validation_results,
+        expectations_path=expectations_path,
+        bucket=constants.S3_BUCKET,
+        validation_results=True,
+    )
+
     return validation_results.to_json_dict()
 
 
@@ -301,7 +369,7 @@ def view_suite_summary(data_ge):
     suite = data_ge.get_expectation_suite(discard_failed_expectations=False)
     suite_str = str(suite)
     total_exp = suite_str.count("expectation_type")
-    print(f"Total Expectations: {total_exp}")
+    logger_config.logger.info(f"Total Expectations: {total_exp}")
     distinct_list = set(
         [
             s
@@ -309,14 +377,62 @@ def view_suite_summary(data_ge):
             if "expect_" in s
         ]
     )
-    print("Counts:")
+    logger_config.logger.info("Counts:")
     for exp in distinct_list:
         exp_count = suite_str.count(exp)
-        print(f"{exp}: {exp_count}")
+        logger_config.logger.info(f"{exp}: {exp_count}")
+        logger_config.logger.info(f"{exp}: {exp_count}")
 
 
-def load_expectations(expectations_path: str):
-    """Load expectations saved locally from a json file.
+def latest_exp_file(
+    bucket: str = constants.S3_BUCKET,
+    prefix: Optional[str] = "app_data/expectations/exp_prem_results",
+    profile_name: Optional[str] = "premier-league-app",
+):
+    try:
+        # The profile name is optional and used for local development
+        if constants.LOCAL_MODE:
+            session = boto3.Session(profile_name=profile_name)
+        else:
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name="eu-west-2",
+            )
+        s3_client = session.client("s3")
+        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+
+        latest_model = None
+        latest_date = None
+        logger_config.logger.info("Looking for latest expectations file")
+        for obj in response.get("Contents", []):
+            filename = obj["Key"]
+            file_date_str = filename.split("_")[-1].split(".")[0]
+            file_date = datetime.strptime(file_date_str, "%Y%m%d")
+
+        if not latest_date or file_date > latest_date:
+            latest_date = file_date
+            latest_model = filename
+
+        return latest_model
+
+    except NoCredentialsError:
+        raise NoCredentialsError(
+            "Credentials not available. Make sure the profile "
+            "name is correct and the credentials are set up properly."
+        )
+    except PartialCredentialsError:
+        raise PartialCredentialsError(
+            "Incomplete credentials. Please check your AWS configuration."
+        )
+
+
+def load_latest_expectations(
+    expectations_path: str,
+    s3_bucket: str = constants.S3_BUCKET,
+    profile_name: Optional[str] = "premier-league-app",
+):
+    """Load latest expectations from S3.
 
     Args:
         expectations_path (string): Full path of the file containing
@@ -325,10 +441,43 @@ def load_expectations(expectations_path: str):
     Returns:
         data_expectations (expectations object): JSON of expectations.
     """
-    with open(expectations_path, "r") as json_file:
-        data_expectations = json.load(json_file)
-    print(f"Expectations loaded from {expectations_path}")
-    return data_expectations
+    try:
+        # The profile name is optional and used for local development
+        if constants.LOCAL_MODE:
+            session = boto3.Session(profile_name=profile_name)
+        else:
+            session = boto3.Session(
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+                region_name="eu-west-2",
+            )
+        s3_client = session.resource("s3")
+        logger_config.logger.info(
+            f"Loading expectations from {s3_bucket}/{expectations_path}"
+        )
+        content_object = s3_client.Object(s3_bucket, expectations_path)
+        file_content = content_object.get()["Body"].read().decode("utf-8")
+        data_expectations = json.loads(file_content)
+        logger_config.logger.info(
+            f"Loaded expectations from {s3_bucket}/{expectations_path}"
+        )
+        return data_expectations
+
+    except NoCredentialsError as e:
+        logger_config.logger.error(
+            f"An error occurred reading {s3_bucket}/{expectations_path}: %s", str(e)
+        )
+        raise NoCredentialsError(
+            "Credentials not available. Make sure the profile "
+            "name is correct and the credentials are set up properly."
+        )
+    except PartialCredentialsError as e:
+        logger_config.logger.error(
+            f"An error occurred reading {s3_bucket}/{expectations_path}: %s", str(e)
+        )
+        raise PartialCredentialsError(
+            "Incomplete credentials. Please check your AWS configuration."
+        )
 
 
 def view_full_suite(data_ge):
@@ -341,6 +490,6 @@ def view_full_suite(data_ge):
     Returns:
         suite (expectations object): A json list of current expectations.
     """
-    print(f"Data GE object type: {type(data_ge)}")
+    logger_config.logger.info(f"Data GE object type: {type(data_ge)}")
     suite = data_ge.get_expectation_suite(discard_failed_expectations=False)
     return suite

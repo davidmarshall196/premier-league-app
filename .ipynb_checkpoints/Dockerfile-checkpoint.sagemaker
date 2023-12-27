@@ -1,0 +1,17 @@
+# Use Python base image
+FROM python:3.10.1
+
+# Set the working directory in the container
+WORKDIR /
+
+# Copy the dependencies file to the working directory
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy necessary directories and files to the working directory
+COPY premier_league/ premier_league/
+
+# Run pipeline
+CMD ["python", "premier_league/sagemaker_pipeline.py"]

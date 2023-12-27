@@ -1,0 +1,20 @@
+artifact_path: model
+flavors:
+  catboost:
+    catboost_version: 1.2.2
+    code: null
+    data: model.cb
+    model_type: CatBoostRegressor
+    save_format: cbm
+  python_function:
+    data: model.cb
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.catboost
+    python_version: 3.10.1
+mlflow_version: 2.8.1
+model_size_bytes: 975356
+model_uuid: e2837b76d09e42068e5babbafc6aefb4
+run_id: 23a48d2f998b4aa6a987c84d48a5702b
+utc_time_created: '2023-11-24 11:52:04.594472'
