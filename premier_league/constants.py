@@ -2,12 +2,6 @@ from datetime import datetime
 import boto3
 import os
 
-# import constants
-try:
-    from premier_league import logger_config
-except ModuleNotFoundError:
-    import logger_config
-
 # Reload all data?
 INITIAL_DATA_LOAD = False
 LOCAL_MODE = False

@@ -7,8 +7,8 @@ try:
 except ModuleNotFoundError:
     import logger_config
 
-LOCAL_MODE = False
-if LOCAL_MODE:
+L_MODE = False
+if L_MODE:
     session = boto3.Session(profile_name="premier-league-app")
 else:
     session = boto3.Session(
