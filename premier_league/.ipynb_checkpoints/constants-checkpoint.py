@@ -1,18 +1,42 @@
 from datetime import datetime
+import boto3
+import os
 
-# Current time
-current_time = datetime.now().strftime("%Y%m%d")
+# import constants
+try:
+    from premier_league import logger_config
+except ModuleNotFoundError:
+    import logger_config
 
 # Reload all data?
 INITIAL_DATA_LOAD = False
 LOCAL_MODE = False
+if LOCAL_MODE:
+    session = boto3.Session(profile_name="premier-league-app")
+else:
+    session = boto3.Session(
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        region_name="eu-west-2",
+    )
+
+def get_parameter(parameter_name):
+    ssm_client = session.client("ssm")
+    response = ssm_client.get_parameter(Name=parameter_name, WithDecryption=True)
+    return response["Parameter"]["Value"]
+
+# Current time
+current_time = datetime.now().strftime("%Y%m%d")
+
+# AWS ACC number
+AWS_ACC_NUM = get_parameter("AMAZON_ACC_NUM")
+S3_BUCKET = get_parameter("S3_BUCKET_NAME")
 
 # Column names
 COLUMNS_REQ = ["season", "Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "FTR"]
 PRED_DF_COL_NAMES = ["Home", "H", "A", "Away", "Date", "Time", "Stadium"]
 
 # Data locations
-S3_BUCKET = "premier-league-app"
 TRAINING_DATA_LOCATION = "app_data/training_data_full.csv"
 PREDICTIONS_LOCATION = "app_data/transformed_data_predictions.csv"
 STADIUM_DATA_LOCATION = "app_data/stadiums-with-GPS-coordinates.csv"
@@ -28,12 +52,12 @@ LOG_LEVEL = "INFO"
 RUN_DATA_EXPECTATIONS = True
 EXPECTATIONS_LOCATION = "../data/expectations"
 EXP_LOC = "../data/expectations/exp_prem_results.json"
-VALIDATION_TOPIC = "arn:aws:sns:eu-west-2:372535189767:sns-data-validation-alert"
+VALIDATION_TOPIC = f"arn:aws:sns:eu-west-2:{AWS_ACC_NUM}:sns-data-validation-alert"
 VALIDATION_RESULTS_PATH = f"app_data/expectations/valid_results_{current_time}.json"
 
 # Data drift
 DRIFT_REPORT_LOC = f"app_data/data_drift_reports/drift_report_{current_time}.html"
-DRIFT_TOPIC = "arn:aws:sns:eu-west-2:372535189767:sns-data-drift-report"
+DRIFT_TOPIC = f"arn:aws:sns:eu-west-2:{AWS_ACC_NUM}:sns-data-drift-report"
 
 # Modelling
 MODEL_VERSION = "v2"
