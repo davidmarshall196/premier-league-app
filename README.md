@@ -36,6 +36,17 @@ The deployment architecture is shown below. Note that the pipeline is working bu
 
 ![Architecture Diagram](assets/architecture.png)
 
+## MLOps Features
+- Data validation with Great Expectations and Data Drift detection with Evidently
+- Email notifications via SNS when failures occur
+- Functional code with doc strings, type hints, exception handling and unit tests
+- Black and flake8 for code quality and linting checks
+- Training of models and management with MLFlow with a PostgresDB at the backend
+- Storing of models, data and logs in S3
+- AWS parameter store for secrets and API keys
+- Docker images stored in ECR for training pipeline runs and streamlit app
+- Eventbridge and Lambda to trigger SageMaker pipeline training jobs
+
 ## System Architecture Overview
 
 The diagram illustrates an automated, containerised workflow deployed on AWS, showing the interaction between various services.
