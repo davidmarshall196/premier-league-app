@@ -69,25 +69,6 @@ def test_get_s3_client_with_profile(mocker):
     mocked_session.assert_called_with(profile_name="premier-league-app")
     assert client == mocked_client
 
-def test_get_s3_client_with_env_vars(mocker):
-    """ Test getting S3 client with environment variables """
-    mocked_session = mocker.patch('boto3.Session')
-    mocked_client = mocker.Mock()
-    mocked_session.return_value.client.return_value = mocked_client
-
-    with patch.dict(
-        os.environ, {"AWS_ACCESS_KEY_ID": "test_key", 
-                     "AWS_SECRET_ACCESS_KEY": "test_secret"}):
-        client = email_functions.get_s3_client(
-            profile_name=None, region="eu-west-2")
-    
-    mocked_session.assert_called_with(
-        aws_access_key_id="test_key",
-        aws_secret_access_key="test_secret",
-        region_name="eu-west-2"
-    )
-    assert client == mocked_client
-
 def test_generate_presigned_s3_url(mocker):
     """ Test generating a presigned S3 URL """
     # Mock the get_s3_client function

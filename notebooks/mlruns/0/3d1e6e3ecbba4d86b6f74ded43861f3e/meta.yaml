@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/david%40inawisdom.com/Documents/Training/premier_league/notebooks/mlruns/0/3d1e6e3ecbba4d86b6f74ded43861f3e/artifacts
+end_time: 1703755725936
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 3d1e6e3ecbba4d86b6f74ded43861f3e
+run_name: gaudy-croc-396
+run_uuid: 3d1e6e3ecbba4d86b6f74ded43861f3e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1703755648994
+status: 3
+tags: []
+user_id: david@inawisdom.com
