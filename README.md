@@ -31,12 +31,7 @@ The app uses [Catboost](https://catboost.ai/) for the underlying predictions. Th
 - Home Team Score
 - Away Team Score
 
-## Deployment
-The deployment architecture is shown below. Note that the pipeline is working but that the app is currently deployed on the streamlit community cloud because it's free.
-
-![Architecture Diagram](assets/architecture.png)
-
-## MLOps Features
+## MLOps Features
 - Data validation with Great Expectations and Data Drift detection with Evidently
 - Email notifications via SNS when failures occur
 - Functional code with doc strings, type hints, exception handling and unit tests
@@ -46,6 +41,11 @@ The deployment architecture is shown below. Note that the pipeline is working bu
 - AWS parameter store for secrets and API keys
 - Docker images stored in ECR for training pipeline runs and streamlit app
 - Eventbridge and Lambda to trigger SageMaker pipeline training jobs
+
+## Deployment
+The deployment architecture is shown below. Note that the pipeline is working but that the app is currently deployed on the streamlit community cloud because it's free.
+
+![Architecture Diagram](assets/architecture.png)
 
 ## System Architecture Overview
 
