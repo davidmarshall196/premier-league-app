@@ -5,15 +5,15 @@ This app provides predictive analysis of upcoming Premier League football matche
 
 ## Features
 - Predict match outcomes with statistical accuracy.
-- Visualise past results and team performance
-- 
+- Visualise past results and team performance.
+- Understand the reasons behind predicitons.
 
 ## Installation
 
 To set up the project environment:
 
 ```bash
-git clone https://github.com/your-username/premier-league-predictions-app.git
+git clone https://github.com/davidmarshall196/premier-league-app.git
 cd premier-league-predictions-app
 pip install -r requirements.txt
 ```
@@ -32,7 +32,7 @@ The app uses [Catboost](https://catboost.ai/) for the underlying predictions. Th
 - Away Team Score
 
 ## Deployment
-The deployment architecture is shown below. Note that the pipeline is working but that the app is currently deployed on the streamlit community cloud because it's free!
+The deployment architecture is shown below. Note that the pipeline is working but that the app is currently deployed on the streamlit community cloud because it's free.
 
 ![Architecture Diagram](assets/architecture.png)
 
