@@ -140,7 +140,7 @@ def train_model(
     hyperparameters: Union[dict, None] = None,
     model_type: str = "result",
     verbose: bool = False,
-    log_model_to_mlflow: bool = False
+    log_model_to_mlflow: bool = False,
 ) -> Union[ctb.CatBoostClassifier, ctb.CatBoostRegressor]:
     """Train CatBoost Classifier or Regressor, optionally specify
     hyperparameters.
