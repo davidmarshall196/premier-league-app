@@ -174,8 +174,11 @@ with col2:
     st.dataframe(current_prediction)
 
     # Then display your plot
-    fig, ax = visualisations.plot_last_5(transformed_data, selected_fixture)
-    st.pyplot(fig)
+    try:
+        fig, ax = visualisations.plot_last_5(transformed_data, selected_fixture)
+        st.pyplot(fig)
+    except ValueError:
+        pass
 
     # Waterfall
     st.subheader("Home Team Goals")
