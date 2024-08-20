@@ -45,9 +45,9 @@ def load_models():
     return regressor1, regressor2
 
 @st.cache_data(ttl=3600)
-def compute_shap_values(model, data):
+def compute_shap_values(_model, data):
     shap_values, features = visualisations.get_shap_values(
-        data, model)
+        data, _model)
     return shap_values, features
 
 # Load data and models
