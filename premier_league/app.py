@@ -8,6 +8,9 @@ import constants
 import s3_helpers
 import logger_config
 
+# Wide layout
+st.set_page_config(layout="wide")
+
 # Create a placeholder
 loading_message = st.empty()
 
@@ -70,10 +73,6 @@ pred_df = (
 )
 pred_df.columns = constants.PRED_DF_COL_NAMES
 pred_df.index = pred_df.index + 1
-
-
-# Wide layout
-st.set_page_config(layout="wide")
 
 # Define the custom CSS
 custom_css = """
