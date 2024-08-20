@@ -294,7 +294,7 @@ def format_results(
 
     # Process results for home team
     home_results = []
-    for index, row in matches_df.iterrows():
+    for index, row in matches_df.head().iterrows():
         if row["HomeTeam"] == home_team or row["AwayTeam"] == home_team:
             opponent = (
                 row["AwayTeam"] if row["HomeTeam"] == home_team else row["HomeTeam"]
@@ -305,7 +305,7 @@ def format_results(
 
     # Process results for away team
     away_results = []
-    for index, row in matches_df.iterrows():
+    for index, row in matches_df.tail().iterrows():
         if row["HomeTeam"] == away_team or row["AwayTeam"] == away_team:
             opponent = (
                 row["AwayTeam"] if row["HomeTeam"] == away_team else row["HomeTeam"]
