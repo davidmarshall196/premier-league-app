@@ -21,24 +21,38 @@ loading_message.text("Please wait a minute, the dashboard is loading...")
 # streamlit run premier_league/streamlit_app.py
 logger_config.logger.info("Streamlit: app starting")
 
-# Grab data
-transformed_data = s3_helpers.grab_data_s3(constants.PREDICTIONS_LOCATION)
 
-# Stadium data
-stadium_data = s3_helpers.grab_data_s3(constants.STADIUM_DATA_LOCATION)
+# Cache the data and models to avoid reloading them
+@st.cache_data(ttl=3600)
+def load_data():
+    transformed_data = s3_helpers.grab_data_s3(
+        constants.PREDICTIONS_LOCATION)
+    stadium_data = s3_helpers.grab_data_s3(
+        constants.STADIUM_DATA_LOCATION)
+    model_performance = s3_helpers.grab_data_s3(
+        constants.MODEL_PERFORMANCE_LOCATION)
+    return transformed_data, stadium_data, model_performance
 
-# Model performance
-model_performance = s3_helpers.grab_data_s3(constants.MODEL_PERFORMANCE_LOCATION)
 
-# Home Team
-regressor1 = s3_helpers.load_transformer_s3_pickle(
-    constants.HOME_MODEL_PREFIX, is_transformer=False
-)
+@st.cache_resource(ttl=3600)
+def load_models():
+    regressor1 = s3_helpers.load_transformer_s3_pickle(
+        constants.HOME_MODEL_PREFIX, is_transformer=False
+    )
+    regressor2 = s3_helpers.load_transformer_s3_pickle(
+        constants.AWAY_MODEL_PREFIX, is_transformer=False
+    )
+    return regressor1, regressor2
 
-# Away Team
-regressor2 = s3_helpers.load_transformer_s3_pickle(
-    constants.AWAY_MODEL_PREFIX, is_transformer=False
-)
+@st.cache_data(ttl=3600)
+def compute_shap_values(model, data):
+    shap_values, features = visualisations.get_shap_values(
+        data, model)
+    return shap_values, features
+
+# Load data and models
+transformed_data, stadium_data, model_performance = load_data()
+regressor1, regressor2 = load_models()
 
 # Extract current fixtures
 current_fixtures = data_extraction.extract_current_fixtures(transformed_data)
@@ -125,25 +139,27 @@ with col1:
     st.components.v1.html(html_code, height=300)
 
     # Shap summary
-    shap_values, features = visualisations.get_shap_values(transformed_data, regressor1)
+    shap_values_home, feature_names_home = compute_shap_values(
+        regressor1, transformed_data)
     st.subheader("SHAP Summary: Home Team")
     shap.initjs()
     plt.figure(figsize=(10, 6))
     shap.summary_plot(
-        shap_values, transformed_data[regressor1.feature_names_], show=True
+        shap_values_home, transformed_data[regressor1.feature_names_], show=True
     )
     plt.title("Prediction for Home Team Goals")
     plt.xlabel("Shap Impact")
     st.pyplot(plt)
 
     # Shap summary
-    shap_values, features = visualisations.get_shap_values(transformed_data, regressor2)
+    shap_values_away, feature_names_away = compute_shap_values(
+        regressor2, transformed_data)
 
     st.subheader("SHAP Summary: Away Team")
     shap.initjs()
     plt.figure(figsize=(10, 6))
     shap.summary_plot(
-        shap_values, transformed_data[regressor2.feature_names_], show=True
+        shap_values_away, transformed_data[regressor2.feature_names_], show=True
     )
     plt.title("Prediction for Away Team Goals")
     plt.xlabel("Shap Impact")
