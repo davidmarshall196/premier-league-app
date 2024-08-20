@@ -8,6 +8,12 @@ import constants
 import s3_helpers
 import logger_config
 
+# Create a placeholder
+loading_message = st.empty()
+
+# Display the loading message
+loading_message.text("Please wait a minute, the dashboard is loading...")
+
 # source env_premier_league/bin/activate
 # streamlit run premier_league/streamlit_app.py
 logger_config.logger.info("Streamlit: app starting")
@@ -225,6 +231,8 @@ with col2:
                 ),
             )
         )
+
+loading_message.empty()
 
 # Embedding the JavaScript
 keep_alive_script = """
